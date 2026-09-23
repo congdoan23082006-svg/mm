@@ -1,243 +1,163 @@
+
 #include <Arduino.h>
+#include <MPU6050.h>
 #include <VL53L0X.h>
 #include <Wire.h>
 
-
-
-// =======================
-// I2C
-// =======================
 #define SDA_PIN 19
 #define SCL_PIN 18
-
-// =======================
-// VL53L0X XSHUT
-// =======================
 #define XSHUT_LEFT 20
 #define XSHUT_FRONT 9
 #define XSHUT_RIGHT 8
+#define M1_IN1 6
+#define M1_IN2 7
+#define M2_IN1 14
+#define M2_IN2 15
 
 VL53L0X sensorLeft;
 VL53L0X sensorFront;
 VL53L0X sensorRight;
+MPU6050 mpu6050(0x68);
 
-// =======================
-// Motor driver
-// =======================
-#define M1_IN1 6
-#define M1_IN2 7
+bool leftReady = false;
+bool frontReady = false;
+bool rightReady = false;
+bool mpuReady = false;
+bool turnTestDone = false;
 
-#define M2_IN1 14
-#define M2_IN2 15
-
-// =======================
-// Encoder
-// =======================
-#define ENC1_A 1
-#define ENC1_B 2
-
-#define ENC2_A 3
-#define ENC2_B 4
-
-volatile long enc1A_count = 0;
-volatile long enc1B_count = 0;
-
-volatile long enc2A_count = 0;
-volatile long enc2B_count = 0;
-
-// =======================
-// Analog
-// =======================
-#define ANALOG_PIN 0
-
-// =======================
-// Motor direction timing
-// =======================
-bool motorDir = false;
-unsigned long lastToggle = 0;
-
-// ======================================================
-// Encoder Interrupts
-// ======================================================
-
-void IRAM_ATTR enc1A_ISR() { enc1A_count++; }
-
-void IRAM_ATTR enc1B_ISR() { enc1B_count++; }
-
-void IRAM_ATTR enc2A_ISR() { enc2A_count++; }
-
-void IRAM_ATTR enc2B_ISR() { enc2B_count++; }
-
-// ======================================================
-// Motor control
-// ======================================================
-
-void motorForward() {
-    digitalWrite(M1_IN1, HIGH);
-    digitalWrite(M1_IN2, LOW);
-
-    digitalWrite(M2_IN1, HIGH);
-    digitalWrite(M2_IN2, LOW);
+void stopMotors() {
+	digitalWrite(M1_IN1, LOW);
+	digitalWrite(M1_IN2, LOW);
+	digitalWrite(M2_IN1, LOW);
+	digitalWrite(M2_IN2, LOW);
 }
 
-void motorBackward() {
-    digitalWrite(M1_IN1, LOW);
-    digitalWrite(M1_IN2, HIGH);
-
-    digitalWrite(M2_IN1, LOW);
-    digitalWrite(M2_IN2, HIGH);
+// Phanh ngắn mạch chủ động để hãm quán tính cơ khí động cơ N20
+void brakeMotors() {
+	digitalWrite(M1_IN1, HIGH);
+	digitalWrite(M1_IN2, HIGH);
+	digitalWrite(M2_IN1, HIGH);
+	digitalWrite(M2_IN2, HIGH);
+	delay(25);
+	stopMotors();
 }
 
-// ======================================================
-// Setup VL53L0X
-// ======================================================
+// Bù quán tính riêng cho rẽ trái (tăng lên 18.0 độ để ngắt sớm hơn, triệt tiêu lố góc)
+constexpr float LEFT_COMPENSATION = 18.0f;
+// Bù quán tính riêng cho rẽ phải (giữ 8.0 độ đã chuẩn)
+constexpr float RIGHT_COMPENSATION = 8.0f;
+// Tốc độ PWM quay (0-255): 90 giúp xe quay đầm, phanh dứt khoát không bị trượt
+constexpr uint8_t TURN_SPEED = 90;
 
-void setupVL53() {
-    pinMode(XSHUT_LEFT, OUTPUT);
-    pinMode(XSHUT_FRONT, OUTPUT);
-    pinMode(XSHUT_RIGHT, OUTPUT);
-
-    // Tắt tất cả
-    digitalWrite(XSHUT_LEFT, LOW);
-    digitalWrite(XSHUT_FRONT, LOW);
-    digitalWrite(XSHUT_RIGHT, LOW);
-
-    delay(100);
-
-    // LEFT
-    digitalWrite(XSHUT_LEFT, HIGH);
-    delay(50);
-
-    sensorLeft.setTimeout(500);
-
-    if (!sensorLeft.init()) {
-        Serial.println("LEFT VL53 FAIL");
-    }
-
-    sensorLeft.setAddress(0x30);
-
-    // FRONT
-    digitalWrite(XSHUT_FRONT, HIGH);
-    delay(50);
-
-    sensorFront.setTimeout(500);
-
-    if (!sensorFront.init()) {
-        Serial.println("FRONT VL53 FAIL");
-    }
-
-    sensorFront.setAddress(0x31);
-
-    // RIGHT
-    digitalWrite(XSHUT_RIGHT, HIGH);
-    delay(50);
-
-    sensorRight.setTimeout(500);
-
-    if (!sensorRight.init()) {
-        Serial.println("RIGHT VL53 FAIL");
-    }
-
-    sensorRight.setAddress(0x32);
-
-    sensorLeft.startContinuous();
-    sensorFront.startContinuous();
-    sensorRight.startContinuous();
+/**
+ * Bước 1 - 4: Rẽ phải tại chỗ 90 độ (hoặc góc tùy chọn) sử dụng MPU6050
+ */
+void turnRight(float angle = 90.0f, float compensation = RIGHT_COMPENSATION, uint8_t speed = TURN_SPEED) {
+	if (!mpuReady) {
+		Serial.println("MPU6050 chua san sang, khong the quay!");
+		return;
+	}
+	bool completed = mpu6050.rotateToAngle(-angle, M1_IN1, M1_IN2, M2_IN1, M2_IN2, compensation, speed);
+	Serial.println(completed ? ">> DA RE PHAI XONG" : ">> CANH BAO: RE PHAI TIMEOUT");
 }
 
-// ======================================================
-// Setup
-// ======================================================
+/**
+ * Bước 1 - 4: Rẽ trái tại chỗ 90 độ (hoặc góc tùy chọn) sử dụng MPU6050
+ */
+void turnLeft(float angle = 90.0f, float compensation = LEFT_COMPENSATION, uint8_t speed = TURN_SPEED) {
+	if (!mpuReady) {
+		Serial.println("MPU6050 chua san sang, khong the quay!");
+		return;
+	}
+
+	bool completed = mpu6050.rotateToAngle(angle, M1_IN1, M1_IN2, M2_IN1, M2_IN2, compensation, speed);
+	Serial.println(completed ? ">> DA RE TRAI XONG" : ">> CANH BAO: RE TRAI TIMEOUT");
+}
+
+void runTurnTest() {
+	if (!mpuReady) return;
+
+	Serial.println("==========================================");
+	Serial.println(">> TEST: CHUAN BI QUAY TRAI 90 DO...");
+	delay(800);
+	turnLeft(90.0f);
+	stopMotors();
+	delay(1500); // Nghỉ 1.5 giây để bạn quan sát góc thực tế
+
+	Serial.println(">> TEST: CHUAN BI QUAY PHAI 90 DO VE HUONG CU...");
+	delay(800);
+	turnRight(90.0f);
+	stopMotors();
+	delay(1500); // Nghỉ 1.5 giây để bạn quan sát góc thực tế
+	Serial.println(">> TEST: HOAN TAT 1 CHU KY. TIEP TUC LAP LAI...");
+}
+
+bool initVL53(VL53L0X &sensor, uint8_t xshutPin, uint8_t address, const char *name) {
+	digitalWrite(xshutPin, HIGH);
+	delay(50);
+	sensor.setTimeout(500);
+
+	if (!sensor.init()) {
+		Serial.print(name);
+		Serial.println(" VL53 FAIL");
+		return false;
+	}
+
+	sensor.setAddress(address);
+	sensor.startContinuous();
+	Serial.print(name);
+	Serial.print(" VL53 OK @ 0x");
+	Serial.println(address, HEX);
+	return true;
+}
 
 void setup() {
-    Serial.begin(115200);
+	Serial.begin(115200);
+	delay(500);
 
-    Wire.begin(SDA_PIN, SCL_PIN);
+	pinMode(M1_IN1, OUTPUT);
+	pinMode(M1_IN2, OUTPUT);
+	pinMode(M2_IN1, OUTPUT);
+	pinMode(M2_IN2, OUTPUT);
+	stopMotors();
+	Serial.println("MOTORS STOPPED");
 
-    // Motor
-    pinMode(M1_IN1, OUTPUT);
-    pinMode(M1_IN2, OUTPUT);
+	Wire.begin(SDA_PIN, SCL_PIN);
+	delay(100);
 
-    pinMode(M2_IN1, OUTPUT);
-    pinMode(M2_IN2, OUTPUT);
+	pinMode(XSHUT_LEFT, OUTPUT);
+	pinMode(XSHUT_FRONT, OUTPUT);
+	pinMode(XSHUT_RIGHT, OUTPUT);
+	digitalWrite(XSHUT_LEFT, LOW);
+	digitalWrite(XSHUT_FRONT, LOW);
+	digitalWrite(XSHUT_RIGHT, LOW);
+	delay(100);
 
-    // Encoder
-    pinMode(ENC1_A, INPUT_PULLUP);
-    pinMode(ENC1_B, INPUT_PULLUP);
+	leftReady = initVL53(sensorLeft, XSHUT_LEFT, 0x30, "LEFT");
+	frontReady = initVL53(sensorFront, XSHUT_FRONT, 0x31, "FRONT");
+	rightReady = initVL53(sensorRight, XSHUT_RIGHT, 0x32, "RIGHT");
 
-    pinMode(ENC2_A, INPUT_PULLUP);
-    pinMode(ENC2_B, INPUT_PULLUP);
+	Wire.beginTransmission(0x68);
+	if (Wire.endTransmission() == 0) {
+		Serial.println("MPU6050 FOUND @ 0x68");
+		mpuReady = mpu6050.begin();
+		if (mpuReady) {
+			mpu6050.calibrate();
+			Serial.println("MPU6050 READY - Z AXIS ONLY");
+		} else {
+			Serial.println("MPU6050 INIT FAIL");
+		}
+	} else {
+		Serial.println("MPU6050 NOT FOUND @ 0x68");
+	}
 
-    attachInterrupt(digitalPinToInterrupt(ENC1_A), enc1A_ISR, RISING);
-    attachInterrupt(digitalPinToInterrupt(ENC1_B), enc1B_ISR, RISING);
-
-    attachInterrupt(digitalPinToInterrupt(ENC2_A), enc2A_ISR, RISING);
-    attachInterrupt(digitalPinToInterrupt(ENC2_B), enc2B_ISR, RISING);
-
-    // VL53
-    setupVL53();
-
-    Serial.println("SYSTEM START");
 }
 
-// ======================================================
-// Loop
-// ======================================================
-
 void loop() {
-    // =========================
-    // Đổi chiều mỗi 3 giây
-    // =========================
-    if (millis() - lastToggle > 3000) {
-        lastToggle = millis();
-
-        motorDir = !motorDir;
-
-        if (motorDir) {
-            motorForward();
-        } else {
-            motorBackward();
-        }
-    }
-
-    // =========================
-    // VL53L0X
-    // =========================
-    uint16_t leftDist = sensorLeft.readRangeContinuousMillimeters();
-    uint16_t frontDist = sensorFront.readRangeContinuousMillimeters();
-    uint16_t rightDist = sensorRight.readRangeContinuousMillimeters();
-
-    // =========================
-    // Analog
-    // =========================
-    int analogValue = analogRead(ANALOG_PIN);
-
-    // =========================
-    // Serial print
-    // =========================
-    Serial.print("VL53 LEFT: ");
-    Serial.print(leftDist);
-
-    Serial.print(" mm | FRONT: ");
-    Serial.print(frontDist);
-
-    Serial.print(" mm | RIGHT: ");
-    Serial.print(rightDist);
-
-    Serial.print(" mm | ENC1_A: ");
-    Serial.print(enc1A_count);
-
-    Serial.print(" | ENC1_B: ");
-    Serial.print(enc1B_count);
-
-    Serial.print(" | ENC2_A: ");
-    Serial.print(enc2A_count);
-
-    Serial.print(" | ENC2_B: ");
-    Serial.print(enc2B_count);
-
-    Serial.print(" | ADC0: ");
-    Serial.println(analogValue);
-
-    delay(100);
+	if (mpuReady) {
+		runTurnTest(); // Quay liên tục lặp đi lặp lại
+	} else {
+		stopMotors();
+		delay(500);
+	}
 }
