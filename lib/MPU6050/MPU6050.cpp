@@ -1,4 +1,5 @@
 #include "MPU6050.h"
+#include "BLEManager.h"
 #include <math.h>
 
 // Các địa chỉ thanh ghi phần cứng MPU6050
@@ -146,12 +147,17 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
                                ? requestedAngle - compensation
                                : 0.0f;
 
-    Serial.print(">> BAT DAU QUAY: Goc hien tai = ");
-    Serial.print(startAngle, 2);
-    Serial.print(" | Can quay = ");
-    Serial.print(effectiveAngle, 2);
-    Serial.print(" do | Toc do PWM = ");
-    Serial.println(turnSpeed);
+    String startMsg = ">> BAT DAU QUAY: Goc hien tai = " + String(startAngle, 2) +
+                      " | Can quay = " + String(effectiveAngle, 2) +
+                      " do | Toc do PWM = " + String(turnSpeed);
+    Serial.println(startMsg);
+    if (bleManager.isConnected()) {
+        bleManager.println(startMsg);
+        String jsonStart = "{\"type\":\"turn_start\",\"start\":" + String(startAngle, 2) +
+                           ",\"effective\":" + String(effectiveAngle, 2) +
+                           ",\"spd\":" + String(turnSpeed) + "}";
+        bleManager.println(jsonStart);
+    }
 
     // Điều khiển động cơ quay theo tốc độ PWM:
     // targetAngle > 0: Quay trái (Motor trái lùi, Motor phải tiến)
@@ -164,8 +170,8 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
     } else {
         analogWrite(m1In1, turnSpeed);
         analogWrite(m1In2, 0);
-        analogWrite(m2In1, 0);
         analogWrite(m2In2, turnSpeed);
+        analogWrite(m2In1, 0);
     }
 
     unsigned long turnStart = millis();
@@ -197,11 +203,19 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
     digitalWrite(m2In2, LOW);
 
     update();
-    Serial.print(">> KET QUA: Goc da quay duoc = ");
-    Serial.print(fabs(_yaw - startAngle), 2);
-    Serial.print(" do | Goc hien tai = ");
-    Serial.print(_yaw, 2);
-    Serial.println(reachedTarget ? " (THANH CONG)" : " (TIMEOUT - KET BANH HOAC LOI DOC GYRO)");
+    float turnedTotal = fabs(_yaw - startAngle);
+    String resMsg = ">> KET QUA: Goc da quay duoc = " + String(turnedTotal, 2) +
+                    " do | Goc hien tai = " + String(_yaw, 2) +
+                    (reachedTarget ? " (THANH CONG)" : " (TIMEOUT - KET BANH HOAC LOI DOC GYRO)");
+    Serial.println(resMsg);
+    if (bleManager.isConnected()) {
+        bleManager.println(resMsg);
+        String jsonRes = "{\"type\":\"turn_res\",\"target\":" + String(fabs(targetAngle), 1) +
+                         ",\"turned\":" + String(turnedTotal, 2) +
+                         ",\"yaw\":" + String(_yaw, 2) +
+                         ",\"success\":" + String(reachedTarget ? "true" : "false") + "}";
+        bleManager.println(jsonRes);
+    }
 
     return reachedTarget;
 }

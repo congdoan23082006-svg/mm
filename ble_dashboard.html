@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MM-Robot BLE Dashboard - PID Bám Tường & Live Tuning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-bg: rgba(18, 26, 43, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary-cyan: #00f2fe;
+            --primary-purple: #7928ca;
+            --accent-blue: #4f46e5;
+            --success-green: #10b981;
+            --warning-amber: #f59e0b;
+            --danger-red: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(121, 40, 202, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+        }
+
+        .logo-title {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ffffff, var(--primary-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, var(--primary-cyan), #0077ff);
+            color: #000;
+            font-weight: 700;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 242, 254, 0.5);
+        }
+
+        .connect-btn.connected {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger-red);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.connected {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--success-green);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* NAVIGATION TABS */
+        .nav-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(121, 40, 202, 0.2));
+            border-color: var(--primary-cyan);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+
+        /* TAB PANELS */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* MODE 1 LAYOUT */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+
+        /* COMPASS & YAW GAUGE */
+        .gauge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 0;
+        }
+
+        .compass-outer {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 2px dashed rgba(0, 242, 254, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.1);
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.05) 0%, transparent 70%);
+        }
+
+        .compass-inner {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: rgba(10, 15, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .needle {
+            width: 4px;
+            height: 70px;
+            background: linear-gradient(to top, transparent 50%, var(--primary-cyan) 50%);
+            position: absolute;
+            border-radius: 2px;
+            transform-origin: center center;
+            transition: transform 0.15s ease-out;
+            box-shadow: 0 0 10px var(--primary-cyan);
+        }
+
+        .needle::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -4px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 12px solid var(--primary-cyan);
+        }
+
+        .yaw-readout {
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .yaw-value {
+            font-size: 34px;
+            font-weight: 800;
+            color: var(--primary-cyan);
+            font-family: monospace;
+            text-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+        }
+
+        .yaw-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* TURN RESULT CARD */
+        .result-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .result-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .val-highlight {
+            font-weight: 700;
+            color: var(--primary-cyan);
+        }
+
+        .val-error {
+            font-weight: 700;
+            color: var(--warning-amber);
+        }
+
+        /* CONTROL SLIDERS */
+        .param-group {
+            margin-bottom: 16px;
+        }
+
+        .param-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .param-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .param-value-badge {
+            background: rgba(0, 242, 254, 0.15);
+            color: var(--primary-cyan);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            font-family: monospace;
+        }
+
+        .slider-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-input {
+            flex: 1;
+            height: 6px;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider-input::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--primary-cyan);
+            transition: all 0.2s;
+        }
+
+        .btn-step {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-step:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-apply {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(0, 119, 255, 0.3));
+            border: 1px solid var(--primary-cyan);
+            color: var(--primary-cyan);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-apply:hover {
+            background: var(--primary-cyan);
+            color: #000;
+        }
+
+        /* ACTION BUTTONS */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-turn-left {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: #fff;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-turn-left:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 114, 255, 0.5);
+        }
+
+        .btn-turn-right {
+            background: linear-gradient(135deg, #7928ca, #b827fc);
+            color: #fff;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(121, 40, 202, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-turn-right:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(121, 40, 202, 0.5);
+        }
+
+        .btn-pid-run {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-pid-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+        }
+
+        .btn-brake {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-brake:hover {
+            box-shadow: 0 6px 18px rgba(239, 68, 68, 0.5);
+        }
+
+        /* SENSOR SIMULATOR (MODE 2) */
+        .robot-visual {
+            width: 240px;
+            height: 240px;
+            margin: 20px auto;
+            position: relative;
+            background: rgba(20, 30, 50, 0.6);
+            border: 2px solid rgba(0, 242, 254, 0.3);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sensor-tag {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--primary-cyan);
+            color: var(--primary-cyan);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .sensor-top { top: -16px; left: 50%; transform: translateX(-50%); }
+        .sensor-left-tag { left: -16px; top: 50%; transform: translateY(-50%); }
+        .sensor-right-tag { right: -16px; top: 50%; transform: translateY(-50%); }
+
+        /* CONSOLE TERMINAL */
+        .terminal {
+            background: #050811;
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #38ef7d;
+            height: 240px;
+            overflow-y: auto;
+            margin-top: 16px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .terminal-line {
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .terminal-line.error { color: var(--danger-red); }
+        .terminal-line.cmd { color: var(--primary-cyan); }
+        .terminal-line.sys { color: var(--warning-amber); }
+
+        .terminal-input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .terminal-input:focus {
+            border-color: var(--primary-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <div class="logo-group">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <div class="logo-title">MICROMOUSE PID & BLE DASHBOARD</div>
+                    <div class="logo-subtitle">Căn Chỉnh PID Bám Tường & Live Tuning cho ESP32-C6</div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="status-badge" id="statusBadge">
+                    <div class="status-dot"></div>
+                    <span id="statusText">Chưa Kết Nối</span>
+                </div>
+                <button class="connect-btn" id="connectBtn" onclick="toggleConnect()">
+                    <span>📡</span> <span id="connectBtnText">Kết Nối Bluetooth</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- NAVIGATION TABS -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab(1)">🎯 Chế Độ 1: Test Quay Góc & Căn Chỉnh</button>
+            <button class="tab-btn" onclick="switchTab(2)">⚙️ Chế Độ 2: Căn Chỉnh PID Bám Tường</button>
+            <button class="tab-btn" onclick="switchTab(3)">📡 Chế Độ 3: Cảm Biến Khoảng Cách</button>
+            <button class="tab-btn" onclick="switchTab(4)">🖥️ Terminal Console BLE</button>
+        </div>
+
+        <!-- TAB 1: TEST QUAY GÓC & CĂN CHỈNH -->
+        <div class="tab-panel active" id="tab1">
+            <div class="grid-2col">
+                <!-- CỘT TRÁI: ĐỒNG HỒ GÓC YAW & KẾT QUẢ QUAY -->
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">🧭 Đồng Hồ Góc Yaw (MPU6050)</div>
+                            <span style="font-size: 12px; color: var(--text-muted);">Cập nhật 200ms</span>
+                        </div>
+
+                        <div class="gauge-container">
+                            <div class="compass-outer">
+                                <div class="compass-inner">
+                                    <div class="needle" id="needle"></div>
+                                </div>
+                            </div>
+                            <div class="yaw-readout">
+                                <div class="yaw-value" id="yawVal">0.0°</div>
+                                <div class="yaw-label">Góc Yaw Hiện Tại</div>
+                            </div>
+                        </div>
+
+                        <div class="result-box">
+                            <div class="card-title" style="font-size: 14px; margin-bottom: 12px;">📊 Kết Quả Lần Quay Gần Nhất</div>
+                            <div class="result-row">
+                                <span>Góc Mục Tiêu:</span>
+                                <span class="val-highlight" id="resTarget">--°</span>
+                            </div>
+                            <div class="result-row">
+                                <span>Góc Đã Quay Thực Tế:</span>
+                                <span class="val-highlight" id="resTurned">--°</span>
+                            </div>
+                            <div class="result-row">
+                                <span>Độ Lệch Bị Lố (Error $\Delta$):</span>
+                                <span class="val-error" id="resError">--°</span>
+                            </div>
+                            <div class="result-row">
+                                <span>Trạng Thái:</span>
+                                <span id="resStatus" style="font-weight: 700; color: var(--text-muted);">Chưa có dữ liệu</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CỘT PHẢI: BẢNG CĂN CHỈNH LIVE & NÚT QUAY THỬ -->
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">⚙️ Bù Quán Tính Quay Góc Live</div>
+                        </div>
+
+                        <!-- PARAM 1: LEFT COMPENSATION -->
+                        <div class="param-group">
+                            <div class="param-header">
+                                <div class="param-title">LEFT_COMPENSATION (Bù Rẽ Trái):</div>
+                                <div class="param-value-badge" id="valBadgeLC">18.0°</div>
+                            </div>
+                            <div class="slider-controls">
+                                <button class="btn-step" onclick="stepParam('lc', -0.5)">-</button>
+                                <input type="range" class="slider-input" id="sliderLC" min="0" max="35" step="0.5" value="18.0" oninput="updateBadge('LC', this.value)">
+                                <button class="btn-step" onclick="stepParam('lc', 0.5)">+</button>
+                                <button class="btn-apply" onclick="applyParam('LC')">Gửi</button>
+                            </div>
+                        </div>
+
+                        <!-- PARAM 2: RIGHT COMPENSATION -->
+                        <div class="param-group">
+                            <div class="param-header">
+                                <div class="param-title">RIGHT_COMPENSATION (Bù Rẽ Phải):</div>
+                                <div class="param-value-badge" id="valBadgeRC">8.0°</div>
+                            </div>
+                            <div class="slider-controls">
+                                <button class="btn-step" onclick="stepParam('rc', -0.5)">-</button>
+                                <input type="range" class="slider-input" id="sliderRC" min="0" max="35" step="0.5" value="8.0" oninput="updateBadge('RC', this.value)">
+                                <button class="btn-step" onclick="stepParam('rc', 0.5)">+</button>
+                                <button class="btn-apply" onclick="applyParam('RC')">Gửi</button>
+                            </div>
+                        </div>
+
+                        <!-- PARAM 3: TURN SPEED -->
+                        <div class="param-group">
+                            <div class="param-header">
+                                <div class="param-title">TURN_SPEED (Tốc độ PWM 0-255):</div>
+                                <div class="param-value-badge" id="valBadgeSPD">90</div>
+                            </div>
+                            <div class="slider-controls">
+                                <button class="btn-step" onclick="stepParam('spd', -5)">-</button>
+                                <input type="range" class="slider-input" id="sliderSPD" min="40" max="255" step="5" value="90" oninput="updateBadge('SPD', this.value)">
+                                <button class="btn-step" onclick="stepParam('spd', 5)">+</button>
+                                <button class="btn-apply" onclick="applyParam('SPD')">Gửi</button>
+                            </div>
+                        </div>
+
+                        <!-- ACTION TEST BUTTONS -->
+                        <div class="action-grid">
+                            <button class="btn-turn-left" onclick="sendCmd('TL')">
+                                <span>◀</span> QUAY THỬ RẼ TRÁI 90°
+                            </button>
+                            <button class="btn-turn-right" onclick="sendCmd('TR')">
+                                QUAY THỬ RẼ PHẢI 90° <span>▶</span>
+                            </button>
+                            <button class="btn-pid-run" onclick="sendCmd('PID_ON')">
+                                🚀 KÍCH HOẠT PID BÁM TƯỜNG TIẾN THẲNG
+                            </button>
+                            <button class="btn-brake" onclick="sendCmd('PID_OFF')">
+                                🛑 DỪNG DỪNG XE (PID OFF)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CĂN CHỈNH PID BÁM TƯỜNG -->
+        <div class="tab-panel" id="tab2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🎛️ Căn Chỉnh Hằng Số PID Bám Tường (Wall Following PID)</div>
+                </div>
+
+                <!-- PID Kp -->
+                <div class="param-group">
+                    <div class="param-header">
+                        <div class="param-title">Kp (Hệ Số Tỉ Lệ - Proportional):</div>
+                        <div class="param-value-badge" id="valBadgeKP">1.20</div>
+                    </div>
+                    <div class="slider-controls">
+                        <button class="btn-step" onclick="stepParam('kp', -0.1)">-</button>
+                        <input type="range" class="slider-input" id="sliderKP" min="0.0" max="5.0" step="0.05" value="1.20" oninput="updateBadge('KP', this.value)">
+                        <button class="btn-step" onclick="stepParam('kp', 0.1)">+</button>
+                        <button class="btn-apply" onclick="applyParam('KP')">Gửi Kp</button>
+                    </div>
+                </div>
+
+                <!-- PID Ki -->
+                <div class="param-group">
+                    <div class="param-header">
+                        <div class="param-title">Ki (Hệ Số Tích Phân - Integral):</div>
+                        <div class="param-value-badge" id="valBadgeKI">0.005</div>
+                    </div>
+                    <div class="slider-controls">
+                        <button class="btn-step" onclick="stepParam('ki', -0.001)">-</button>
+                        <input type="range" class="slider-input" id="sliderKI" min="0.000" max="0.050" step="0.001" value="0.005" oninput="updateBadge('KI', this.value)">
+                        <button class="btn-step" onclick="stepParam('ki', 0.001)">+</button>
+                        <button class="btn-apply" onclick="applyParam('KI')">Gửi Ki</button>
+                    </div>
+                </div>
+
+                <!-- PID Kd -->
+                <div class="param-group">
+                    <div class="param-header">
+                        <div class="param-title">Kd (Hệ Số Vi Phân - Derivative):</div>
+                        <div class="param-value-badge" id="valBadgeKD">0.25</div>
+                    </div>
+                    <div class="slider-controls">
+                        <button class="btn-step" onclick="stepParam('kd', -0.05)">-</button>
+                        <input type="range" class="slider-input" id="sliderKD" min="0.00" max="2.00" step="0.05" value="0.25" oninput="updateBadge('KD', this.value)">
+                        <button class="btn-step" onclick="stepParam('kd', 0.05)">+</button>
+                        <button class="btn-apply" onclick="applyParam('KD')">Gửi Kd</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 16px; margin-top: 24px;">
+                    <button class="btn-pid-run" style="flex: 1;" onclick="sendCmd('PID_ON')">
+                        ▶ BẮT ĐẦU CHẠY PID BÁM TƯỜNG
+                    </button>
+                    <button class="btn-brake" style="flex: 1;" onclick="sendCmd('PID_OFF')">
+                        ⏹ DỪNG CHẠY PID
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CẢM BIẾN KHOẢNG CÁCH -->
+        <div class="tab-panel" id="tab3">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📡 Cảm Biến Khoảng Cách VL53L0X (mm)</div>
+                </div>
+
+                <div class="robot-visual">
+                    <div class="sensor-tag sensor-top">TRƯỚC: <span id="distFront">--</span> mm</div>
+                    <div class="sensor-tag sensor-left-tag">TRÁI: <span id="distLeft">--</span> mm</div>
+                    <div class="sensor-tag sensor-right-tag">PHẢI: <span id="distRight">--</span> mm</div>
+                    <div style="text-align: center; color: var(--text-muted); font-size: 13px;">
+                        🤖<br>ROBOT MICROMOUSE
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: TERMINAL CONSOLE -->
+        <div class="tab-panel" id="tab4">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🖥️ Nhật Ký BLE Terminal (Real-time)</div>
+                    <button class="btn-step" style="width: auto; padding: 4px 12px; font-size: 12px;" onclick="clearTerminal()">Xóa Log</button>
+                </div>
+                <div class="terminal" id="terminal">
+                    <div class="terminal-line sys">[SYSTEM] Sẵn sàng kết nối Bluetooth LE...</div>
+                </div>
+                <div class="terminal-input-group">
+                    <input type="text" class="terminal-input" id="cmdInput" placeholder="Nhập lệnh (vd: PID_ON, PID_OFF, SET_KP=1.5, STATUS)..." onkeydown="if(event.key==='Enter') sendCustomCmd()">
+                    <button class="btn-apply" style="padding: 10px 20px;" onclick="sendCustomCmd()">GỬI LỆNH</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+        const RX_CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+        const TX_CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+        let bleDevice = null;
+        let rxCharacteristic = null;
+        let txCharacteristic = null;
+
+        function log(msg, type = 'normal') {
+            const term = document.getElementById('terminal');
+            const line = document.createElement('div');
+            line.className = 'terminal-line ' + type;
+            const time = new Date().toLocaleTimeString();
+            line.textContent = `[${time}] ${msg}`;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function clearTerminal() {
+            document.getElementById('terminal').innerHTML = '';
+        }
+
+        function switchTab(idx) {
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i + 1 === idx);
+            });
+            document.querySelectorAll('.tab-panel').forEach((panel, i) => {
+                panel.classList.toggle('active', i + 1 === idx);
+            });
+        }
+
+        async function toggleConnect() {
+            if (bleDevice && bleDevice.gatt.connected) {
+                bleDevice.gatt.disconnect();
+                return;
+            }
+
+            try {
+                log("Đang quét thiết bị Bluetooth...", "sys");
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: "MM-Robot" }, { name: "MM-Robot-BLE" }],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                log(`Đã chọn thiết bị: ${bleDevice.name}. Đang kết nối GATT...`, "sys");
+
+                const server = await bleDevice.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+
+                rxCharacteristic = await service.getCharacteristic(RX_CHARACTERISTIC_UUID);
+                txCharacteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID);
+
+                await txCharacteristic.startNotifications();
+                txCharacteristic.addEventListener('characteristicvaluechanged', handleBLEData);
+
+                updateConnectUI(true);
+                log(">> KẾT NỐI BLE THÀNH CÔNG!", "sys");
+                sendCmd("STATUS");
+            } catch (err) {
+                log("Lỗi kết nối Bluetooth: " + err.message, "error");
+            }
+        }
+
+        function onDisconnected() {
+            updateConnectUI(false);
+            log("Đã ngắt kết nối Bluetooth!", "error");
+        }
+
+        function updateConnectUI(connected) {
+            const btn = document.getElementById('connectBtn');
+            const btnText = document.getElementById('connectBtnText');
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+
+            if (connected) {
+                btn.classList.add('connected');
+                btnText.textContent = "Ngắt Kết Nối";
+                badge.classList.add('connected');
+                statusText.textContent = "Đã Kết Nối";
+            } else {
+                btn.classList.remove('connected');
+                btnText.textContent = "Kết Nối Bluetooth";
+                badge.classList.remove('connected');
+                statusText.textContent = "Chưa Kết Nối";
+            }
+        }
+
+        async function sendCmd(cmd) {
+            if (!rxCharacteristic) {
+                log("Chưa kết nối Bluetooth! Vui lòng bấm Kết Nối Bluetooth.", "error");
+                return;
+            }
+
+            try {
+                const encoder = new TextEncoder();
+                await rxCharacteristic.writeValue(encoder.encode(cmd + "\n"));
+                log(`>> Gửi lệnh: ${cmd}`, "cmd");
+            } catch (err) {
+                log(`Lỗi gửi lệnh ${cmd}: ` + err.message, "error");
+            }
+        }
+
+        function sendCustomCmd() {
+            const input = document.getElementById('cmdInput');
+            const val = input.value.trim();
+            if (val) {
+                sendCmd(val);
+                input.value = '';
+            }
+        }
+
+        function handleBLEData(event) {
+            const value = event.target.value;
+            const decoder = new TextDecoder('utf-8');
+            const str = decoder.decode(value).trim();
+            if (!str) return;
+
+            const lines = str.split('\n');
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+
+                log(line);
+
+                if (line.startsWith('{') && line.endsWith('}')) {
+                    try {
+                        const data = JSON.parse(line);
+                        parseJSONPacket(data);
+                    } catch (e) {}
+                }
+            });
+        }
+
+        function parseJSONPacket(data) {
+            if (data.type === "telemetry") {
+                if (data.yaw !== undefined) {
+                    document.getElementById('yawVal').textContent = `${data.yaw.toFixed(1)}°`;
+                    document.getElementById('needle').style.transform = `rotate(${data.yaw}deg)`;
+                }
+
+                if (data.l !== undefined) document.getElementById('distLeft').textContent = data.l;
+                if (data.f !== undefined) document.getElementById('distFront').textContent = data.f;
+                if (data.r !== undefined) document.getElementById('distRight').textContent = data.r;
+
+                if (data.lc !== undefined) updateBadge('LC', data.lc);
+                if (data.rc !== undefined) updateBadge('RC', data.rc);
+                if (data.spd !== undefined) updateBadge('SPD', data.spd);
+
+                if (data.kp !== undefined) updateBadge('KP', data.kp);
+                if (data.ki !== undefined) updateBadge('KI', data.ki);
+                if (data.kd !== undefined) updateBadge('KD', data.kd);
+            }
+            else if (data.type === "turn_res") {
+                document.getElementById('resTarget').textContent = `${data.target.toFixed(1)}°`;
+                document.getElementById('resTurned').textContent = `${data.turned.toFixed(2)}°`;
+                
+                const err = (data.turned - data.target).toFixed(2);
+                const errEl = document.getElementById('resError');
+                errEl.textContent = (err >= 0 ? `+${err}` : `${err}`) + `° (${Math.abs(err) > 1.5 ? 'Bị Lố/Thiếu' : 'Chuẩn'})`;
+                errEl.style.color = Math.abs(err) <= 1.5 ? 'var(--success-green)' : 'var(--warning-amber)';
+
+                const statusEl = document.getElementById('resStatus');
+                statusEl.textContent = data.success ? "THÀNH CÔNG" : "TIMEOUT LỖI";
+                statusEl.style.color = data.success ? "var(--success-green)" : "var(--danger-red)";
+            }
+        }
+
+        function updateBadge(type, val) {
+            const badge = document.getElementById(`valBadge${type}`);
+            const slider = document.getElementById(`slider${type}`);
+            if (!badge || !slider) return;
+
+            if (type === 'SPD') badge.textContent = val;
+            else if (type === 'KP' || type === 'KD') badge.textContent = parseFloat(val).toFixed(2);
+            else if (type === 'KI') badge.textContent = parseFloat(val).toFixed(3);
+            else badge.textContent = parseFloat(val).toFixed(1) + '°';
+
+            slider.value = val;
+        }
+
+        function stepParam(param, delta) {
+            const type = param.toUpperCase();
+            const slider = document.getElementById(`slider${type}`);
+            let val = parseFloat(slider.value) + delta;
+            if (val < parseFloat(slider.min)) val = parseFloat(slider.min);
+            if (val > parseFloat(slider.max)) val = parseFloat(slider.max);
+            slider.value = val;
+            updateBadge(type, val);
+            applyParam(type);
+        }
+
+        function applyParam(type) {
+            const val = document.getElementById(`slider${type}`).value;
+            sendCmd(`SET_${type}=${val}`);
+        }
+    </script>
+</body>
+</html>
