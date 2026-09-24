@@ -523,35 +523,181 @@
             box-shadow: 0 6px 18px rgba(239, 68, 68, 0.5);
         }
 
-        /* SENSOR SIMULATOR (MODE 2) */
-        .robot-visual {
-            width: 240px;
-            height: 240px;
-            margin: 20px auto;
-            position: relative;
-            background: rgba(20, 30, 50, 0.6);
-            border: 2px solid rgba(0, 242, 254, 0.3);
-            border-radius: 20px;
+        /* SENSOR SIMULATOR (TAB 3) */
+        .maze-arena-wrapper {
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 16px;
+            margin: 24px auto;
+            max-width: 620px;
         }
 
-        .sensor-tag {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--primary-cyan);
+        .sensor-dock {
+            background: rgba(13, 21, 38, 0.85);
+            border: 1px solid rgba(0, 242, 254, 0.25);
+            border-radius: 12px;
+            padding: 12px 14px;
+            text-align: center;
+            min-width: 105px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .dock-badge {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .dock-val {
+            font-size: 24px;
+            font-weight: 800;
             color: var(--primary-cyan);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
+            font-family: monospace;
+            line-height: 1.1;
+        }
+
+        .dock-unit {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .dock-status {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 10px;
             font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(0, 242, 254, 0.15);
+            color: var(--primary-cyan);
+        }
+
+        .dock-status.no-wall {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+        }
+
+        .dock-status.warning {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+        }
+
+        .maze-cell-stage {
+            width: 270px;
+            height: 240px;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(0, 242, 254, 0.06) 0%, rgba(5, 8, 17, 0.9) 75%);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 8px 30px rgba(0, 0, 0, 0.5);
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+
+        .wall-bar {
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+
+        .wall-top {
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            box-shadow: 0 0 14px rgba(0, 198, 255, 0.6);
+        }
+
+        .wall-top.open {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .wall-top.danger {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            box-shadow: 0 0 16px rgba(239, 68, 68, 0.8);
+            animation: pulse-danger 0.8s infinite alternate;
+        }
+
+        .wall-left {
+            top: 20px;
+            bottom: 20px;
+            left: 0;
+            width: 8px;
+            border-radius: 4px;
+            background: linear-gradient(180deg, #00f2fe, #4facfe);
+            box-shadow: 0 0 14px rgba(0, 242, 254, 0.6);
+        }
+
+        .wall-left.open {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .wall-right {
+            top: 20px;
+            bottom: 20px;
+            right: 0;
+            width: 8px;
+            border-radius: 4px;
+            background: linear-gradient(180deg, #7928ca, #d946ef);
+            box-shadow: 0 0 14px rgba(217, 70, 239, 0.6);
+        }
+
+        .wall-right.open {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .dock-top {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            padding: 4px 12px;
+            min-width: auto;
+        }
+
+        .robot-mouse-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13, 21, 38, 0.9);
+            border: 2px solid rgba(0, 242, 254, 0.4);
+            border-radius: 14px;
+            padding: 12px 20px;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .cell-dev-pill {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-green);
+            margin-top: 6px;
             font-family: monospace;
         }
 
-        .sensor-top { top: -16px; left: 50%; transform: translateX(-50%); }
-        .sensor-left-tag { left: -16px; top: 50%; transform: translateY(-50%); }
-        .sensor-right-tag { right: -16px; top: 50%; transform: translateY(-50%); }
+        @keyframes pulse-danger {
+            from { opacity: 0.7; box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+            to { opacity: 1; box-shadow: 0 0 22px rgba(239,68,68,1); }
+        }
 
         /* CONSOLE TERMINAL */
         .terminal {
@@ -700,7 +846,7 @@
                             </div>
                             <div class="slider-controls">
                                 <button class="btn-step" onclick="stepParam('lc', -0.5)">-</button>
-                                <input type="range" class="slider-input" id="sliderLC" min="0" max="35" step="0.5" value="18.0" oninput="updateBadge('LC', this.value)">
+                                <input type="range" class="slider-input" id="sliderLC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('LC', this.value)" onchange="applyParam('LC')">
                                 <button class="btn-step" onclick="stepParam('lc', 0.5)">+</button>
                                 <button class="btn-apply" onclick="applyParam('LC')">Gửi</button>
                             </div>
@@ -710,11 +856,11 @@
                         <div class="param-group">
                             <div class="param-header">
                                 <div class="param-title">RIGHT_COMPENSATION (Bù Rẽ Phải):</div>
-                                <div class="param-value-badge" id="valBadgeRC">8.0°</div>
+                                <div class="param-value-badge" id="valBadgeRC">18.0°</div>
                             </div>
                             <div class="slider-controls">
                                 <button class="btn-step" onclick="stepParam('rc', -0.5)">-</button>
-                                <input type="range" class="slider-input" id="sliderRC" min="0" max="35" step="0.5" value="8.0" oninput="updateBadge('RC', this.value)">
+                                <input type="range" class="slider-input" id="sliderRC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('RC', this.value)" onchange="applyParam('RC')">
                                 <button class="btn-step" onclick="stepParam('rc', 0.5)">+</button>
                                 <button class="btn-apply" onclick="applyParam('RC')">Gửi</button>
                             </div>
@@ -724,11 +870,11 @@
                         <div class="param-group">
                             <div class="param-header">
                                 <div class="param-title">TURN_SPEED (Tốc độ PWM 0-255):</div>
-                                <div class="param-value-badge" id="valBadgeSPD">90</div>
+                                <div class="param-value-badge" id="valBadgeSPD">50</div>
                             </div>
                             <div class="slider-controls">
                                 <button class="btn-step" onclick="stepParam('spd', -5)">-</button>
-                                <input type="range" class="slider-input" id="sliderSPD" min="40" max="255" step="5" value="90" oninput="updateBadge('SPD', this.value)">
+                                <input type="range" class="slider-input" id="sliderSPD" min="40" max="255" step="5" value="50" oninput="updateBadge('SPD', this.value)" onchange="applyParam('SPD')">
                                 <button class="btn-step" onclick="stepParam('spd', 5)">+</button>
                                 <button class="btn-apply" onclick="applyParam('SPD')">Gửi</button>
                             </div>
@@ -799,7 +945,7 @@
                     </div>
                     <div class="slider-controls">
                         <button class="btn-step" onclick="stepParam('fspd', -5)">-</button>
-                        <input type="range" class="slider-input" id="sliderFSPD" min="40" max="255" step="5" value="95" oninput="updateBadge('FSPD', this.value)">
+                        <input type="range" class="slider-input" id="sliderFSPD" min="40" max="255" step="5" value="95" oninput="updateBadge('FSPD', this.value)" onchange="applyParam('FSPD')">
                         <button class="btn-step" onclick="stepParam('fspd', 5)">+</button>
                         <button class="btn-apply" onclick="applyParam('FSPD')">Gửi Tốc Độ</button>
                     </div>
@@ -813,7 +959,7 @@
                     </div>
                     <div class="slider-controls">
                         <button class="btn-step" onclick="stepParam('kp', -0.1)">-</button>
-                        <input type="range" class="slider-input" id="sliderKP" min="0.0" max="5.0" step="0.05" value="1.20" oninput="updateBadge('KP', this.value)">
+                        <input type="range" class="slider-input" id="sliderKP" min="0.0" max="5.0" step="0.05" value="1.20" oninput="updateBadge('KP', this.value)" onchange="applyParam('KP')">
                         <button class="btn-step" onclick="stepParam('kp', 0.1)">+</button>
                         <button class="btn-apply" onclick="applyParam('KP')">Gửi Kp</button>
                     </div>
@@ -827,7 +973,7 @@
                     </div>
                     <div class="slider-controls">
                         <button class="btn-step" onclick="stepParam('ki', -0.001)">-</button>
-                        <input type="range" class="slider-input" id="sliderKI" min="0.000" max="0.050" step="0.001" value="0.005" oninput="updateBadge('KI', this.value)">
+                        <input type="range" class="slider-input" id="sliderKI" min="0.000" max="0.050" step="0.001" value="0.005" oninput="updateBadge('KI', this.value)" onchange="applyParam('KI')">
                         <button class="btn-step" onclick="stepParam('ki', 0.001)">+</button>
                         <button class="btn-apply" onclick="applyParam('KI')">Gửi Ki</button>
                     </div>
@@ -841,7 +987,7 @@
                     </div>
                     <div class="slider-controls">
                         <button class="btn-step" onclick="stepParam('kd', -0.05)">-</button>
-                        <input type="range" class="slider-input" id="sliderKD" min="0.00" max="2.00" step="0.05" value="0.25" oninput="updateBadge('KD', this.value)">
+                        <input type="range" class="slider-input" id="sliderKD" min="0.00" max="2.00" step="0.05" value="0.25" oninput="updateBadge('KD', this.value)" onchange="applyParam('KD')">
                         <button class="btn-step" onclick="stepParam('kd', 0.05)">+</button>
                         <button class="btn-apply" onclick="applyParam('KD')">Gửi Kd</button>
                     </div>
@@ -862,16 +1008,116 @@
         <div class="tab-panel" id="tab3">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">📡 Cảm Biến Khoảng Cách VL53L0X (mm)</div>
+                    <div class="card-title">📡 Cảm Biến Khoảng Cách VL53L0X & Mô Phỏng Ô Mê Cung</div>
+                    <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Mốc Chuẩn Tâm Ô: T:161mm | F:110mm | R:152mm</div>
                 </div>
 
-                <div class="robot-visual">
-                    <div class="sensor-tag sensor-top">TRƯỚC: <span id="distFront">--</span> mm</div>
-                    <div class="sensor-tag sensor-left-tag">TRÁI: <span id="distLeft">--</span> mm</div>
-                    <div class="sensor-tag sensor-right-tag">PHẢI: <span id="distRight">--</span> mm</div>
-                    <div style="text-align: center; color: var(--text-muted); font-size: 13px;">
-                        🤖<br>ROBOT MICROMOUSE
+                <!-- MAZE ARENA: KHÔNG CÒN BỊ ĐÈ CHỮ -->
+                <div class="maze-arena-wrapper">
+                    <!-- DOCK TRÁI -->
+                    <div class="sensor-dock">
+                        <div class="dock-badge">TRÁI (LEFT)</div>
+                        <div class="dock-val" id="distLeft">161</div>
+                        <div class="dock-unit">mm</div>
+                        <div class="dock-status" id="statusWallLeft">CÓ TƯỜNG</div>
                     </div>
+
+                    <!-- Ô MAZE Ở GIỮA -->
+                    <div class="maze-cell-stage">
+                        <!-- VÁCH TRƯỚC -->
+                        <div class="wall-bar wall-top" id="wallTopBar"></div>
+                        <!-- VÁCH TRÁI -->
+                        <div class="wall-bar wall-left" id="wallLeftBar"></div>
+                        <!-- VÁCH PHẢI -->
+                        <div class="wall-bar wall-right" id="wallRightBar"></div>
+
+                        <!-- DOCK TRƯỚC -->
+                        <div class="sensor-dock dock-top">
+                            <span class="dock-badge" style="margin: 0;">TRƯỚC:</span>
+                            <span class="dock-val" id="distFront" style="font-size: 16px;">110</span>
+                            <span class="dock-unit" style="margin: 0;">mm</span>
+                            <span class="dock-status" id="statusWallFront">CÓ TƯỜNG</span>
+                        </div>
+
+                        <!-- THÂN ROBOT MICROMOUSE -->
+                        <div class="robot-mouse-body" id="mouseBody">
+                            <div style="font-size: 32px; filter: drop-shadow(0 0 8px rgba(0,242,254,0.5));">🐭</div>
+                            <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--primary-cyan); margin-top: 4px;">MICROMOUSE</div>
+                            <div class="cell-dev-pill" id="cellDevPill">Lệch tâm: 0.0 mm</div>
+                        </div>
+                    </div>
+
+                    <!-- DOCK PHẢI -->
+                    <div class="sensor-dock">
+                        <div class="dock-badge">PHẢI (RIGHT)</div>
+                        <div class="dock-val" id="distRight">152</div>
+                        <div class="dock-unit">mm</div>
+                        <div class="dock-status" id="statusWallRight">CÓ TƯỜNG</div>
+                    </div>
+                </div>
+
+                <!-- 3 BẢNG THÔNG SỐ CHI TIẾT CẢM BIẾN -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 20px;">
+                    <!-- SENSOR TRÁI -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,242,254,0.25); border-radius: 12px; padding: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--primary-cyan);">⬅️ Cảm Biến Trái</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Chuẩn: 161 mm</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px;">
+                            <div id="distLeftBar" style="height: 100%; width: 53%; background: linear-gradient(90deg, #0077ff, var(--primary-cyan)); transition: width 0.15s ease;"></div>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ngưỡng nhận tường: &lt; 230 mm</div>
+                    </div>
+
+                    <!-- SENSOR TRƯỚC -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,198,255,0.25); border-radius: 12px; padding: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: #00c6ff;">⬆️ Cảm Biến Trước</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Chuẩn: 110 mm</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px;">
+                            <div id="distFrontBar" style="height: 100%; width: 44%; background: linear-gradient(90deg, #00c6ff, #0072ff); transition: width 0.15s ease;"></div>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Phanh dừng khẩn cấp: &le; 65 mm</div>
+                    </div>
+
+                    <!-- SENSOR PHẢI -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(217,70,239,0.25); border-radius: 12px; padding: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: #d946ef;">➡️ Cảm Biến Phải</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Chuẩn: 152 mm</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px;">
+                            <div id="distRightBar" style="height: 100%; width: 50%; background: linear-gradient(90deg, #7928ca, #d946ef); transition: width 0.15s ease;"></div>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ngưỡng nhận tường: &lt; 230 mm</div>
+                    </div>
+                </div>
+
+                <!-- THÔNG SỐ ĐÃ NẠP & NÚT GÁN LIVE CHUẨN TÂM -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 13px; color: #fff;">🎯 Hiệu Chuẩn Tâm Ô Tự Động (One-Click Calibration)</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                                Đặt robot vào chính giữa ô mê cung và nhấn nút bên phải để robot tự lưu cự ly này làm mốc chuẩn cân bằng!
+                            </div>
+                        </div>
+                        <button class="btn-step" style="width: auto; padding: 8px 16px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, rgba(0,242,254,0.2), rgba(0,119,255,0.3)); border: 1px solid var(--primary-cyan); color: #fff;" onclick="calibrateCenterCurrent()">
+                            📌 Đặt Vị Trí Hiện Tại Làm Tâm Ô
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ĐIỀU KHIỂN NHANH PID TẠI TAB 3 -->
+                <div style="display: flex; gap: 14px; margin-top: 20px;">
+                    <button class="btn-pid-run" style="flex: 1;" onclick="sendCmd('PID_ON')">
+                        🚀 KÍCH HOẠT PID BÁM TƯỜNG
+                    </button>
+                    <button class="btn-brake" style="flex: 1;" onclick="sendCmd('PID_OFF')">
+                        🛑 DỪNG DỪNG XE (PID OFF)
+                    </button>
                 </div>
             </div>
         </div>
@@ -1066,6 +1312,17 @@
             });
         }
 
+        let currentDL = 161;
+        let currentDF = 110;
+        let currentDR = 152;
+
+        function calibrateCenterCurrent() {
+            if (!confirm(`Xác nhận dùng cự ly hiện tại:\n- Trái: ${currentDL} mm\n- Phải: ${currentDR} mm\n- Trước: ${currentDF} mm\nLàm mốc chuẩn tâm ô cho Robot?`)) return;
+            sendCmd(`SET_TLD=${currentDL}`);
+            sendCmd(`SET_TRD=${currentDR}`);
+            log(`>> [HIỆU CHUẨN] Đã gán chuẩn tâm ô: Trái=${currentDL}mm, Phải=${currentDR}mm`, 'sys');
+        }
+
         function parseJSONPacket(data) {
             if (data.type === "telemetry") {
                 if (data.yaw !== undefined) {
@@ -1073,9 +1330,95 @@
                     document.getElementById('needle').style.transform = `rotate(${data.yaw}deg)`;
                 }
 
-                if (data.l !== undefined) document.getElementById('distLeft').textContent = data.l;
-                if (data.f !== undefined) document.getElementById('distFront').textContent = data.f;
-                if (data.r !== undefined) document.getElementById('distRight').textContent = data.r;
+                // Cập nhật cảm biến khoảng cách & mô phỏng ô (Tab 3)
+                if (data.l !== undefined) {
+                    currentDL = data.l;
+                    document.getElementById('distLeft').textContent = data.l;
+                    const wallLeft = (data.l > 20 && data.l < (data.wth || 230));
+                    const statusLeft = document.getElementById('statusWallLeft');
+                    const barLeft = document.getElementById('wallLeftBar');
+                    const distLBar = document.getElementById('distLeftBar');
+                    if (statusLeft) {
+                        statusLeft.textContent = wallLeft ? "CÓ TƯỜNG" : "TRỐNG";
+                        statusLeft.className = "dock-status" + (wallLeft ? "" : " no-wall");
+                    }
+                    if (barLeft) {
+                        barLeft.className = "wall-bar wall-left" + (wallLeft ? "" : " open");
+                    }
+                    if (distLBar) distLBar.style.width = Math.min(100, Math.max(0, (data.l / 300) * 100)) + '%';
+                }
+
+                if (data.f !== undefined) {
+                    currentDF = data.f;
+                    document.getElementById('distFront').textContent = data.f;
+                    const fstop = data.fstop || 65;
+                    const isStopZone = (data.f > 20 && data.f <= fstop);
+                    const wallFront = (data.f > 20 && data.f < 180);
+                    const statusFront = document.getElementById('statusWallFront');
+                    const barTop = document.getElementById('wallTopBar');
+                    const distFBar = document.getElementById('distFrontBar');
+                    if (statusFront) {
+                        if (isStopZone) {
+                            statusFront.textContent = "PHANH DỪNG";
+                            statusFront.className = "dock-status warning";
+                        } else if (wallFront) {
+                            statusFront.textContent = "CÓ TƯỜNG";
+                            statusFront.className = "dock-status";
+                        } else {
+                            statusFront.textContent = "TRỐNG";
+                            statusFront.className = "dock-status no-wall";
+                        }
+                    }
+                    if (barTop) {
+                        if (isStopZone) {
+                            barTop.className = "wall-bar wall-top danger";
+                        } else if (wallFront) {
+                            barTop.className = "wall-bar wall-top";
+                        } else {
+                            barTop.className = "wall-bar wall-top open";
+                        }
+                    }
+                    if (distFBar) distFBar.style.width = Math.min(100, Math.max(0, (data.f / 250) * 100)) + '%';
+                }
+
+                if (data.r !== undefined) {
+                    currentDR = data.r;
+                    document.getElementById('distRight').textContent = data.r;
+                    const wallRight = (data.r > 20 && data.r < (data.wth || 230));
+                    const statusRight = document.getElementById('statusWallRight');
+                    const barRight = document.getElementById('wallRightBar');
+                    const distRBar = document.getElementById('distRightBar');
+                    if (statusRight) {
+                        statusRight.textContent = wallRight ? "CÓ TƯỜNG" : "TRỐNG";
+                        statusRight.className = "dock-status" + (wallRight ? "" : " no-wall");
+                    }
+                    if (barRight) {
+                        barRight.className = "wall-bar wall-right" + (wallRight ? "" : " open");
+                    }
+                    if (distRBar) distRBar.style.width = Math.min(100, Math.max(0, (data.r / 300) * 100)) + '%';
+                }
+
+                // Độ lệch tâm ô thực tế
+                if (data.l !== undefined && data.r !== undefined) {
+                    const tld = data.tld !== undefined ? data.tld : 161.0;
+                    const trd = data.trd !== undefined ? data.trd : 152.0;
+                    const dev = (data.l - tld) - (data.r - trd);
+                    const pill = document.getElementById('cellDevPill');
+                    if (pill) {
+                        const devRound = dev.toFixed(1);
+                        pill.textContent = `Lệch tâm: ${dev >= 0 ? '+' : ''}${devRound} mm`;
+                        if (Math.abs(dev) <= 6) {
+                            pill.style.background = 'rgba(16, 185, 129, 0.2)';
+                            pill.style.color = 'var(--success-green)';
+                        } else if (Math.abs(dev) <= 15) {
+                            pill.style.background = 'rgba(245, 158, 11, 0.2)';
+                            pill.style.color = 'var(--warning-amber)';
+                        } else {
+                            pill.style.background = 'rgba(239, 68, 68, 0.2)';
+                            pill.style.color = 'var(--danger-red)';
+                        }
+                    }
+                }
 
                 if (data.lc !== undefined) updateBadge('LC', data.lc);
                 if (data.rc !== undefined) updateBadge('RC', data.rc);

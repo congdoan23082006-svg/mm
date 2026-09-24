@@ -28,16 +28,10 @@ void CommandHandler::processBLECommands() {
         robotNav.turnRight(90.0f);
         robotNav.stopMotors();
     } else if (cmd == "PID_ON" || cmd == "FORWARD" || cmd == "FWD") {
-        robotNav.autoTestMode = false;
-        robotNav.mpu6050.update();
-        robotNav.wallPID.reset();
-        robotNav.gyroPID.reset();
-        robotNav.pidRunActive = true;
+        robotNav.startPID();
         bleManager.println(">> [BLE] KICH HOAT PID BAM TUONG & GIU HUONG TIEN THANG!");
     } else if (cmd == "PID_OFF" || cmd == "STOP" || cmd == "ST") {
-        robotNav.pidRunActive = false;
-        robotNav.autoTestMode = false;
-        robotNav.stopMotors();
+        robotNav.stopPID();
         bleManager.println(">> [BLE] DA DUNG XE (PID OFF)");
     } else if (cmd == "RESET_YAW" || cmd == "RST") {
         robotNav.mpu6050.resetYaw();
@@ -49,13 +43,13 @@ void CommandHandler::processBLECommands() {
         bleManager.println(">> [BLE] HIEU CHUAN GYRO HOAN TAT! GOC YAW VE 0.0 DO.");
     } else if (cmd.startsWith("SET_LC=")) {
         float val = cmd.substring(7).toFloat();
-        if (val >= 0.0f && val <= 45.0f) {
+        if (val >= 0.0f && val <= 50.0f) {
             robotNav.leftCompensation = val;
             bleManager.println(">> [BLE] CAP NHAT LEFT_COMPENSATION = " + String(robotNav.leftCompensation, 1));
         }
     } else if (cmd.startsWith("SET_RC=")) {
         float val = cmd.substring(7).toFloat();
-        if (val >= 0.0f && val <= 45.0f) {
+        if (val >= 0.0f && val <= 50.0f) {
             robotNav.rightCompensation = val;
             bleManager.println(">> [BLE] CAP NHAT RIGHT_COMPENSATION = " + String(robotNav.rightCompensation, 1));
         }
@@ -96,6 +90,32 @@ void CommandHandler::processBLECommands() {
         robotNav.pidRunActive = false;
         robotNav.stopMotors();
         bleManager.println(">> [BLE] TAT CHEDO AUTO TEST");
+    } else if (cmd.startsWith("SET_TLD=")) {
+        float val = cmd.substring(8).toFloat();
+        if (val >= 50.0f && val <= 300.0f) {
+            robotNav.targetLeftDist = val;
+            robotNav.centerOffset = robotNav.targetLeftDist - robotNav.targetRightDist;
+            bleManager.println(">> [BLE] CAP NHAT TARGET_LEFT_DIST = " + String(val, 1));
+        }
+    } else if (cmd.startsWith("SET_TRD=")) {
+        float val = cmd.substring(8).toFloat();
+        if (val >= 50.0f && val <= 300.0f) {
+            robotNav.targetRightDist = val;
+            robotNav.centerOffset = robotNav.targetLeftDist - robotNav.targetRightDist;
+            bleManager.println(">> [BLE] CAP NHAT TARGET_RIGHT_DIST = " + String(val, 1));
+        }
+    } else if (cmd.startsWith("SET_WTH=")) {
+        int val = cmd.substring(8).toInt();
+        if (val >= 100 && val <= 400) {
+            robotNav.wallThreshold = (uint16_t)val;
+            bleManager.println(">> [BLE] CAP NHAT WALL_THRESHOLD = " + String(val));
+        }
+    } else if (cmd.startsWith("SET_FSTOP=")) {
+        int val = cmd.substring(10).toInt();
+        if (val >= 30 && val <= 150) {
+            robotNav.frontStopDist = (uint16_t)val;
+            bleManager.println(">> [BLE] CAP NHAT FRONT_STOP_DIST = " + String(val));
+        }
     } else if (cmd == "STATUS" || cmd == "GET") {
         printStatus();
     }
@@ -123,7 +143,11 @@ void CommandHandler::sendTelemetry() {
                          ",\"auto\":" + String(robotNav.autoTestMode ? "true" : "false") +
                          ",\"lspd\":" + String(robotNav.currentLeftSpeed) +
                          ",\"rspd\":" + String(robotNav.currentRightSpeed) +
-                         ",\"fspd\":" + String(robotNav.baseForwardSpeed) + "}";
+                         ",\"fspd\":" + String(robotNav.baseForwardSpeed) +
+                         ",\"tld\":" + String(robotNav.targetLeftDist, 1) +
+                         ",\"trd\":" + String(robotNav.targetRightDist, 1) +
+                         ",\"wth\":" + String(robotNav.wallThreshold) +
+                         ",\"fstop\":" + String(robotNav.frontStopDist) + "}";
         bleManager.println(jsonMsg);
     }
 }

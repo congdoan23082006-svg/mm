@@ -12,8 +12,8 @@ public:
     void update();
     bool rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
                        uint8_t m2In1, uint8_t m2In2,
-                       float compensation = 8.0f,
-                       uint8_t turnSpeed = 110,
+                       float compensation = 18.0f,
+                       uint8_t turnSpeed = 50,
                        unsigned long timeoutMs = 2500);
     
     float getRoll() const;

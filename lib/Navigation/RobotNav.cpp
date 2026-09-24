@@ -14,13 +14,20 @@ RobotNav::RobotNav()
     pidRunActive = false;
 
     leftCompensation = 18.0f;
-    rightCompensation = 8.0f;
-    turnSpeed = 90;
+    rightCompensation = 18.0f;
+    turnSpeed = 50;
     baseForwardSpeed = 95;
     currentLeftSpeed = 0;
     currentRightSpeed = 0;
     _targetYaw = 0.0f;
     _lastPIDLoopTime = 0;
+
+    // Giá trị thực tế đo được tại tâm ô (mm)
+    targetLeftDist = 161.0f;
+    targetRightDist = 152.0f;
+    centerOffset = 9.0f;   // 161.0f - 152.0f
+    wallThreshold = 230;   // Khoảng cách < 230mm là có tường, > 230mm là cửa trống
+    frontStopDist = 65;    // Phanh dừng khi cách tường trước <= 65mm
 }
 
 void RobotNav::init() {
@@ -113,7 +120,7 @@ void RobotNav::turnRight(float angle) {
         bleManager.println(msg);
         return;
     }
-    bool completed = mpu6050.rotateToAngle(-angle, M1_IN1, M1_IN2, M2_IN1, M2_IN2, rightCompensation, turnSpeed);
+    bool completed = mpu6050.rotateToAngle(angle, M1_IN1, M1_IN2, M2_IN1, M2_IN2, rightCompensation, turnSpeed);
     String res = completed ? ">> DA RE PHAI XONG" : ">> CANH BAO: RE PHAI TIMEOUT";
     Serial.println(res);
     bleManager.println(res);
@@ -127,7 +134,7 @@ void RobotNav::turnLeft(float angle) {
         return;
     }
 
-    bool completed = mpu6050.rotateToAngle(angle, M1_IN1, M1_IN2, M2_IN1, M2_IN2, leftCompensation, turnSpeed);
+    bool completed = mpu6050.rotateToAngle(-angle, M1_IN1, M1_IN2, M2_IN1, M2_IN2, leftCompensation, turnSpeed);
     String res = completed ? ">> DA RE TRAI XONG" : ">> CANH BAO: RE TRAI TIMEOUT";
     Serial.println(res);
     bleManager.println(res);
@@ -151,6 +158,24 @@ void RobotNav::runTurnTest() {
     bleManager.println(">> AUTO TEST: HOAN TAT 1 CHU KY.");
 }
 
+void RobotNav::startPID() {
+    autoTestMode = false;
+    if (mpuReady) {
+        mpu6050.update();
+        _targetYaw = mpu6050.getYaw();
+    }
+    wallPID.reset();
+    gyroPID.reset();
+    _lastPIDLoopTime = micros();
+    pidRunActive = true;
+}
+
+void RobotNav::stopPID() {
+    pidRunActive = false;
+    autoTestMode = false;
+    stopMotors();
+}
+
 void RobotNav::updatePIDLoop() {
     if (!pidRunActive) return;
 
@@ -163,7 +188,8 @@ void RobotNav::updatePIDLoop() {
     uint16_t dF = frontReady ? sensorFront.readRangeContinuousMillimeters() : 999;
     uint16_t dR = rightReady ? sensorRight.readRangeContinuousMillimeters() : 999;
 
-    if (dF < 60) {
+    // 1. Phanh dừng an toàn khi gặp vách tường trước (ở tâm là 110mm, tới <= 65mm thì dừng)
+    if (frontReady && dF > 20 && dF <= frontStopDist) {
         stopMotors();
         pidRunActive = false;
         String msg = ">> [PID] PHANH DUNG: GAP VAC TUONG TRUOC (" + String(dF) + " mm)";
@@ -172,25 +198,27 @@ void RobotNav::updatePIDLoop() {
         return;
     }
 
-    constexpr uint16_t WALL_THRESHOLD = 180;
-    constexpr float TARGET_WALL_DIST = 60.0f;
-
-    bool hasLeftWall = (dL < WALL_THRESHOLD);
-    bool hasRightWall = (dR < WALL_THRESHOLD);
+    bool hasLeftWall  = (leftReady && dL > 20 && dL < wallThreshold);
+    bool hasRightWall = (rightReady && dR > 20 && dR < wallThreshold);
 
     float error = 0.0f;
     float pidOut = 0.0f;
 
     if (hasLeftWall && hasRightWall) {
-        error = (float)dL - (float)dR;
+        // Cả 2 bên đều có tường: sai số lệch tâm ô chuẩn
+        // Khi xe ở tâm: dL = 161mm, dR = 152mm => (161 - 152) - 9 = 0
+        error = ((float)dL - (float)dR) - centerOffset;
         pidOut = wallPID.computeError(error, dt);
     } else if (hasLeftWall) {
-        error = ((float)dL - TARGET_WALL_DIST) * 1.5f;
+        // Chỉ có tường trái: bám tường trái ở cự ly chuẩn 161mm
+        error = ((float)dL - targetLeftDist) * 1.5f;
         pidOut = wallPID.computeError(error, dt);
     } else if (hasRightWall) {
-        error = (TARGET_WALL_DIST - (float)dR) * 1.5f;
+        // Chỉ có tường phải: bám tường phải ở cự ly chuẩn 152mm
+        error = (targetRightDist - (float)dR) * 1.5f;
         pidOut = wallPID.computeError(error, dt);
     } else {
+        // Không có tường hai bên (ngã tư): dùng Gyro MPU6050 giữ góc thẳng
         mpu6050.update();
         float currentYaw = mpu6050.getYaw();
         error = _targetYaw - currentYaw;

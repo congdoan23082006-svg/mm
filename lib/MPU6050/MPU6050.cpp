@@ -162,31 +162,46 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
     // Điều khiển động cơ quay theo tốc độ PWM:
     // targetAngle > 0: Quay trái (Motor trái lùi, Motor phải tiến)
     // targetAngle < 0: Quay phải (Motor trái tiến, Motor phải lùi)
-    if (targetAngle > 0.0f) {
-        analogWrite(m1In1, 0);
-        analogWrite(m1In2, turnSpeed);
-        analogWrite(m2In1, turnSpeed);
-        analogWrite(m2In2, 0);
-    } else {
-        analogWrite(m1In1, turnSpeed);
-        analogWrite(m1In2, 0);
-        analogWrite(m2In2, turnSpeed);
-        analogWrite(m2In1, 0);
-    }
-
     unsigned long turnStart = millis();
     bool reachedTarget = false;
 
-    // Dùng độ lệch góc tuyệt đối để tránh lỗi ngược dấu làm quay tròn tít mù
+    // Giảm tốc tiếp cận (Proportional Deceleration)
+    // Trong 35 độ cuối cùng, tốc độ PWM giảm dần từ turnSpeed về MIN_TURN_SPEED
+    constexpr uint8_t MIN_TURN_SPEED = 42; 
+    constexpr float DECEL_ZONE = 35.0f;
+
     while (millis() - turnStart <= timeoutMs) {
         update();
         float turnedAngle = fabs(_yaw - startAngle);
+        float remainingAngle = effectiveAngle - turnedAngle;
 
-        if (turnedAngle >= effectiveAngle) {
+        if (turnedAngle >= effectiveAngle || remainingAngle <= 0.0f) {
             reachedTarget = true;
             break;
         }
-        delay(1);
+
+        // Tính tốc độ giảm dần theo góc còn lại
+        uint8_t currentSpeed = turnSpeed;
+        if (remainingAngle < DECEL_ZONE && turnSpeed > MIN_TURN_SPEED) {
+            float ratio = remainingAngle / DECEL_ZONE; // 1.0 -> 0.0
+            currentSpeed = MIN_TURN_SPEED + (uint8_t)((turnSpeed - MIN_TURN_SPEED) * ratio);
+        }
+
+        if (targetAngle > 0.0f) {
+            // Quay trái: Motor trái lùi, Motor phải tiến
+            analogWrite(m1In1, 0);
+            analogWrite(m1In2, currentSpeed);
+            analogWrite(m2In1, currentSpeed);
+            analogWrite(m2In2, 0);
+        } else {
+            // Quay phải: Motor trái tiến, Motor phải lùi
+            analogWrite(m1In1, currentSpeed);
+            analogWrite(m1In2, 0);
+            analogWrite(m2In1, 0);
+            analogWrite(m2In2, currentSpeed);
+        }
+
+        delay(2);
     }
 
     // 1. Dừng ngay tín hiệu xung PWM trên tất cả các chân
@@ -195,12 +210,12 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
     analogWrite(m2In1, 0);
     analogWrite(m2In2, 0);
 
-    // 2. Phanh ngắn mạch (Active Braking) để triệt tiêu trớn quán tính ngay lập tức
+    // 2. Phanh ngắn mạch (Active Braking) trong 60ms để triệt tiêu hoàn toàn quán tính
     digitalWrite(m1In1, HIGH);
     digitalWrite(m1In2, HIGH);
     digitalWrite(m2In1, HIGH);
     digitalWrite(m2In2, HIGH);
-    delay(40);
+    delay(60);
 
     // 3. Nhả motor về trạng thái thả tự do (Tắt dứt điểm)
     analogWrite(m1In1, 0);
