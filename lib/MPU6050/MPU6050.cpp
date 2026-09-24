@@ -124,8 +124,8 @@ void MPU6050::update() {
     float gyroZRate = -((gz / 16.4f) - _gyroZOffset);
 
     // Lọc nhiễu tĩnh nhỏ (Deadzone) tránh bị trôi góc khi xe đứng yên
-    if (abs(gyroZRate) < 0.6) {
-        gyroZRate = 0;
+    if (fabsf(gyroZRate) < 0.8f) {
+        gyroZRate = 0.0f;
     }
 
     // Tích phân vận tốc góc theo thời gian để ra góc Yaw
@@ -189,14 +189,24 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
         delay(1);
     }
 
-    // Phanh ngắn mạch (Active Braking) để triệt tiêu trớn quán tính ngay lập tức
+    // 1. Dừng ngay tín hiệu xung PWM trên tất cả các chân
+    analogWrite(m1In1, 0);
+    analogWrite(m1In2, 0);
+    analogWrite(m2In1, 0);
+    analogWrite(m2In2, 0);
+
+    // 2. Phanh ngắn mạch (Active Braking) để triệt tiêu trớn quán tính ngay lập tức
     digitalWrite(m1In1, HIGH);
     digitalWrite(m1In2, HIGH);
     digitalWrite(m2In1, HIGH);
     digitalWrite(m2In2, HIGH);
     delay(40);
 
-    // Nhả motor về trạng thái thả tự do
+    // 3. Nhả motor về trạng thái thả tự do (Tắt dứt điểm)
+    analogWrite(m1In1, 0);
+    analogWrite(m1In2, 0);
+    analogWrite(m2In1, 0);
+    analogWrite(m2In2, 0);
     digitalWrite(m1In1, LOW);
     digitalWrite(m1In2, LOW);
     digitalWrite(m2In1, LOW);

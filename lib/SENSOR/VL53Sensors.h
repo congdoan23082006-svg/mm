@@ -10,9 +10,9 @@
 #define SDA_PIN        19
 #define SCL_PIN        18
 
-#define XSHUT_LEFT     20
+#define XSHUT_LEFT     8
 #define XSHUT_FRONT    9
-#define XSHUT_RIGHT    8
+#define XSHUT_RIGHT    20
 
 // ================= ADDRESS =================
 #define ADDRESS_LEFT   0x30

@@ -8,9 +8,9 @@
 #define SCL_PIN 18
 
 // ================= VL53L0X XSHUT PINS =================
-#define XSHUT_LEFT  20
+#define XSHUT_LEFT  8
 #define XSHUT_FRONT 9
-#define XSHUT_RIGHT 8
+#define XSHUT_RIGHT 20
 
 // ================= VL53L0X I2C ADDRESSES =================
 #define ADDRESS_LEFT  0x30
@@ -18,10 +18,10 @@
 #define ADDRESS_RIGHT 0x32
 
 // ================= DRV8833 MOTOR DRIVER PINS =================
-#define M1_IN1 6   // Động cơ trái
-#define M1_IN2 7
-#define M2_IN1 14  // Động cơ phải
-#define M2_IN2 15
+#define M1_IN1 7   // Động cơ trái tiến
+#define M1_IN2 6   // Động cơ trái lùi
+#define M2_IN1 15  // Động cơ phải tiến
+#define M2_IN2 14  // Động cơ phải lùi
 
 // ================= MPU6050 I2C ADDRESS =================
 #define MPU6050_ADDR 0x68

@@ -29,6 +29,8 @@ public:
     float rightCompensation;
     uint8_t turnSpeed;
     uint8_t baseForwardSpeed;
+    int currentLeftSpeed;
+    int currentRightSpeed;
     bool autoTestMode;
     bool pidRunActive;
 

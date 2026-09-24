@@ -17,6 +17,8 @@ RobotNav::RobotNav()
     rightCompensation = 8.0f;
     turnSpeed = 90;
     baseForwardSpeed = 95;
+    currentLeftSpeed = 0;
+    currentRightSpeed = 0;
     _targetYaw = 0.0f;
     _lastPIDLoopTime = 0;
 }
@@ -79,6 +81,12 @@ bool RobotNav::initVL53(VL53L0X &sensor, uint8_t xshutPin, uint8_t address, cons
 }
 
 void RobotNav::stopMotors() {
+    currentLeftSpeed = 0;
+    currentRightSpeed = 0;
+    analogWrite(M1_IN1, 0);
+    analogWrite(M1_IN2, 0);
+    analogWrite(M2_IN1, 0);
+    analogWrite(M2_IN2, 0);
     digitalWrite(M1_IN1, LOW);
     digitalWrite(M1_IN2, LOW);
     digitalWrite(M2_IN1, LOW);
@@ -86,6 +94,10 @@ void RobotNav::stopMotors() {
 }
 
 void RobotNav::brakeMotors() {
+    analogWrite(M1_IN1, 0);
+    analogWrite(M1_IN2, 0);
+    analogWrite(M2_IN1, 0);
+    analogWrite(M2_IN2, 0);
     digitalWrite(M1_IN1, HIGH);
     digitalWrite(M1_IN2, HIGH);
     digitalWrite(M2_IN1, HIGH);
@@ -190,6 +202,9 @@ void RobotNav::updatePIDLoop() {
 
     leftSpeed = constrain(leftSpeed, 0, 255);
     rightSpeed = constrain(rightSpeed, 0, 255);
+
+    currentLeftSpeed = leftSpeed;
+    currentRightSpeed = rightSpeed;
 
     analogWrite(M1_IN1, leftSpeed);
     analogWrite(M1_IN2, 0);

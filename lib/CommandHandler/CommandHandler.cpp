@@ -39,6 +39,14 @@ void CommandHandler::processBLECommands() {
         robotNav.autoTestMode = false;
         robotNav.stopMotors();
         bleManager.println(">> [BLE] DA DUNG XE (PID OFF)");
+    } else if (cmd == "RESET_YAW" || cmd == "RST") {
+        robotNav.mpu6050.resetYaw();
+        bleManager.println(">> [BLE] DA RESET GOC YAW VE 0.0 DO!");
+    } else if (cmd == "CALIB" || cmd == "CALIBRATE") {
+        robotNav.stopMotors();
+        bleManager.println(">> [BLE] DANG HIEU CHUAN GYRO... VUI LONG DE YEN ROBOT 1.5S!");
+        robotNav.mpu6050.calibrate(400);
+        bleManager.println(">> [BLE] HIEU CHUAN GYRO HOAN TAT! GOC YAW VE 0.0 DO.");
     } else if (cmd.startsWith("SET_LC=")) {
         float val = cmd.substring(7).toFloat();
         if (val >= 0.0f && val <= 45.0f) {
@@ -57,6 +65,12 @@ void CommandHandler::processBLECommands() {
             robotNav.turnSpeed = (uint8_t)val;
             robotNav.baseForwardSpeed = (uint8_t)val;
             bleManager.println(">> [BLE] CAP NHAT SPEED = " + String(robotNav.turnSpeed));
+        }
+    } else if (cmd.startsWith("SET_FSPD=")) {
+        int val = cmd.substring(9).toInt();
+        if (val >= 40 && val <= 255) {
+            robotNav.baseForwardSpeed = (uint8_t)val;
+            bleManager.println(">> [BLE] CAP NHAT BASE_FORWARD_SPEED = " + String(robotNav.baseForwardSpeed));
         }
     } else if (cmd.startsWith("SET_KP=")) {
         float val = cmd.substring(7).toFloat();
@@ -106,7 +120,10 @@ void CommandHandler::sendTelemetry() {
                          ",\"ki\":" + String(robotNav.wallPID.getKi(), 3) +
                          ",\"kd\":" + String(robotNav.wallPID.getKd(), 2) +
                          ",\"pid\":" + String(robotNav.pidRunActive ? "true" : "false") +
-                         ",\"auto\":" + String(robotNav.autoTestMode ? "true" : "false") + "}";
+                         ",\"auto\":" + String(robotNav.autoTestMode ? "true" : "false") +
+                         ",\"lspd\":" + String(robotNav.currentLeftSpeed) +
+                         ",\"rspd\":" + String(robotNav.currentRightSpeed) +
+                         ",\"fspd\":" + String(robotNav.baseForwardSpeed) + "}";
         bleManager.println(jsonMsg);
     }
 }
