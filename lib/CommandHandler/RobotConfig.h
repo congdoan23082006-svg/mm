@@ -18,10 +18,10 @@
 #define ADDRESS_RIGHT 0x32
 
 // ================= DRV8833 MOTOR DRIVER PINS =================
-#define M1_IN1 7   // Động cơ trái tiến
-#define M1_IN2 6   // Động cơ trái lùi
-#define M2_IN1 15  // Động cơ phải tiến
-#define M2_IN2 14  // Động cơ phải lùi
+#define M1_IN1 15  // Động cơ trái tiến
+#define M1_IN2 14  // Động cơ trái lùi
+#define M2_IN1 7   // Động cơ phải tiến
+#define M2_IN2 6   // Động cơ phải lùi
 
 // ================= MPU6050 I2C ADDRESS =================
 #define MPU6050_ADDR 0x68

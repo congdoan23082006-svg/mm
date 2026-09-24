@@ -229,8 +229,12 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
 
     update();
     float turnedTotal = fabs(_yaw - startAngle);
+    
+    // Reset góc yaw về 0 sau khi quay xong
+    resetYaw();
+    
     String resMsg = ">> KET QUA: Goc da quay duoc = " + String(turnedTotal, 2) +
-                    " do | Goc hien tai = " + String(_yaw, 2) +
+                    " do | Goc hien tai (da reset) = " + String(_yaw, 2) +
                     (reachedTarget ? " (THANH CONG)" : " (TIMEOUT - KET BANH HOAC LOI DOC GYRO)");
     Serial.println(resMsg);
     if (bleManager.isConnected()) {
