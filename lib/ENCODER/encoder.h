@@ -16,5 +16,6 @@ extern volatile long enc2A_count;
 extern volatile long enc2B_count;
 
 void setupEncoders();
+void resetEncoders();
 
 #endif

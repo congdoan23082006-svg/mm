@@ -49,3 +49,10 @@ void setupEncoders() {
     attachInterrupt(digitalPinToInterrupt(ENC2_A), enc2_ISR, CHANGE);
     attachInterrupt(digitalPinToInterrupt(ENC2_B), enc2_ISR, CHANGE);
 }
+
+void resetEncoders() {
+    enc1A_count = 0;
+    enc1B_count = 0;
+    enc2A_count = 0;
+    enc2B_count = 0;
+}

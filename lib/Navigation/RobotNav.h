@@ -4,6 +4,7 @@
 #include "BLEManager.h"
 #include "PIDController.h"
 #include "RobotConfig.h"
+#include "encoder.h"
 #include <Arduino.h>
 #include <MPU6050.h>
 #include <VL53L0X.h>
@@ -26,6 +27,11 @@ public:
   void startPID();
   void stopPID();
 
+  // Encoder helper methods
+  long getLeftEncoder() const;
+  long getRightEncoder() const;
+  void resetEnc();
+
   // Các biến thông số có thể điều chỉnh
   float leftCompensation;
   float rightCompensation;
@@ -35,6 +41,12 @@ public:
   int currentRightSpeed;
   bool autoTestMode;
   bool pidRunActive;
+
+  // Cấu hình đồng bộ bánh bằng Encoder (Cascaded Inner Loop)
+  bool encoderSyncActive;
+  float encKp;
+  bool invertEncLeft;
+  bool invertEncRight;
 
   // Thông số hiệu chuẩn khoảng cách ô (VL53L0X)
   float targetLeftDist;
@@ -60,6 +72,11 @@ public:
 private:
   float _targetYaw;
   unsigned long _lastPIDLoopTime;
+  long _lastEncLeft;
+  long _lastEncRight;
+  long _startEncLeft;
+  long _startEncRight;
+  float _smoothError;
 
   bool initVL53(VL53L0X &sensor, uint8_t xshutPin, uint8_t address,
                 const char *name);

@@ -1153,8 +1153,8 @@
             const term = document.getElementById('terminal');
             const line = document.createElement('div');
             line.className = 'terminal-line ' + type;
-            const time = new Date().toLocaleTimeString();
-            line.textContent = `[${time}] ${msg}`;
+            const timestamp = new Date().toLocaleString('vi-VN');
+            line.textContent = `[${timestamp}] ${msg}`;
             term.appendChild(line);
             term.scrollTop = term.scrollHeight;
         }
