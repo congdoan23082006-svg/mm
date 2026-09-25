@@ -4,8 +4,8 @@ RobotNav robotNav;
 
 RobotNav::RobotNav()
     : mpu6050(MPU6050_ADDR),
-      wallPID(0.2f, 0.0f, 0.0f, -60.0f,
-              60.0f), // Kp cực nhỏ, Kd = 0 để bắt đầu. Giới hạn PID_Out ở mức +-60
+      wallPID(0.25f, 0.0f, 0.8f, -40.0f,
+              40.0f), // Kp 0.25, THÊM Kd = 0.8 làm phanh giảm xóc chống quá đà
       gyroPID(0.6f, 0.0f, 0.0f, -60.0f, 60.0f) {
   leftReady = false;
   frontReady = false;
@@ -16,19 +16,19 @@ RobotNav::RobotNav()
 
   leftCompensation = 18.0f;
   rightCompensation = 18.0f;
-  turnSpeed = 50;
+  turnSpeed = 80;
   baseForwardSpeed = 75;
   currentLeftSpeed = 0;
   currentRightSpeed = 0;
   _targetYaw = 0.0f;
   _lastPIDLoopTime = 0;
 
-  // Giá trị thực tế đo được tại tâm ô (mm)
-  targetLeftDist = 161.0f;
-  targetRightDist = 152.0f;
-  centerOffset = 9.0f; // 161.0f - 152.0f
+  // Giá trị thực tế đo được tại tâm ô (Theo kết quả đo mới nhất trên sa hình)
+  targetLeftDist = 170.0f;
+  targetRightDist = 149.0f;
+  centerOffset = 21.0f; // 170.0f - 149.0f = 21.0f
   wallThreshold = 230; // Khoảng cách < 230mm là có tường, > 230mm là cửa trống
-  frontStopDist = 65;  // Phanh dừng khi cách tường trước <= 65mm
+  frontStopDist = 100; // Phanh dừng khi cách tường trước <= 100mm
 }
 
 void RobotNav::init() {
@@ -193,9 +193,21 @@ void RobotNav::updatePIDLoop() {
     dt = 0.01f;
   _lastPIDLoopTime = now;
 
-  uint16_t dL = leftReady ? sensorLeft.readRangeContinuousMillimeters() : 999;
-  uint16_t dF = frontReady ? sensorFront.readRangeContinuousMillimeters() : 999;
-  uint16_t dR = rightReady ? sensorRight.readRangeContinuousMillimeters() : 999;
+  // Đọc raw data
+  uint16_t raw_dL = leftReady ? sensorLeft.readRangeContinuousMillimeters() : 999;
+  uint16_t raw_dF = frontReady ? sensorFront.readRangeContinuousMillimeters() : 999;
+  uint16_t raw_dR = rightReady ? sensorRight.readRangeContinuousMillimeters() : 999;
+
+  // Khởi tạo bộ lọc EMA (Exponential Moving Average)
+  static float smooth_dL = targetLeftDist;
+  static float smooth_dR = targetRightDist;
+  
+  if (raw_dL < 800) smooth_dL = (0.5f * raw_dL) + (0.5f * smooth_dL); else smooth_dL = 999;
+  if (raw_dR < 800) smooth_dR = (0.5f * raw_dR) + (0.5f * smooth_dR); else smooth_dR = 999;
+
+  uint16_t dL = (uint16_t)smooth_dL;
+  uint16_t dR = (uint16_t)smooth_dR;
+  uint16_t dF = raw_dF; // Phía trước cần phản ứng nhanh để phanh, không nên lọc
 
   // 1. Phanh dừng an toàn khi gặp vách tường trước (ở tâm là 110mm, tới <= 65mm
   // thì dừng)
@@ -217,16 +229,18 @@ void RobotNav::updatePIDLoop() {
 
   if (hasLeftWall && hasRightWall) {
     // Cả 2 bên đều có tường: sai số lệch tâm ô chuẩn
-    // Khi xe ở tâm: dL = 161mm, dR = 152mm => (161 - 152) - 9 = 0
     error = ((float)dL - (float)dR) - centerOffset;
+    if (abs(error) < 5.0f) error = 0.0f; // Khử nhiễu: Sai lệch dưới 5mm coi như xe đang đi thẳng
     pidOut = wallPID.computeError(error, dt);
   } else if (hasLeftWall) {
-    // Chỉ có tường trái: bám tường trái ở cự ly chuẩn 161mm
+    // Chỉ có tường trái: bám tường trái ở cự ly chuẩn
     error = ((float)dL - targetLeftDist);
+    if (abs(error) < 5.0f) error = 0.0f;
     pidOut = wallPID.computeError(error, dt);
   } else if (hasRightWall) {
-    // Chỉ có tường phải: bám tường phải ở cự ly chuẩn 152mm
+    // Chỉ có tường phải: bám tường phải ở cự ly chuẩn
     error = (targetRightDist - (float)dR);
+    if (abs(error) < 5.0f) error = 0.0f;
     pidOut = wallPID.computeError(error, dt);
   } else {
     // Không có tường hai bên (ngã tư): dùng Gyro MPU6050 giữ góc thẳng
@@ -239,8 +253,8 @@ void RobotNav::updatePIDLoop() {
   int leftSpeed = baseForwardSpeed - (int)pidOut;
   int rightSpeed = baseForwardSpeed + (int)pidOut;
 
-  leftSpeed = constrain(leftSpeed, 0, 255);
-  rightSpeed = constrain(rightSpeed, 0, 255);
+  leftSpeed = constrain(leftSpeed, 50, 255);
+  rightSpeed = constrain(rightSpeed, 50, 255);
 
   currentLeftSpeed = leftSpeed;
   currentRightSpeed = rightSpeed;

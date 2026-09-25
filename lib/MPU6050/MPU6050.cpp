@@ -167,7 +167,7 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
 
     // Giảm tốc tiếp cận (Proportional Deceleration)
     // Trong 35 độ cuối cùng, tốc độ PWM giảm dần từ turnSpeed về MIN_TURN_SPEED
-    constexpr uint8_t MIN_TURN_SPEED = 42; 
+    constexpr uint8_t MIN_TURN_SPEED = 60; 
     constexpr float DECEL_ZONE = 35.0f;
 
     while (millis() - turnStart <= timeoutMs) {
