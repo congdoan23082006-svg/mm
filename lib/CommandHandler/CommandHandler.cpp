@@ -149,6 +149,19 @@ void CommandHandler::processBLECommands() {
     robotNav.invertEncRight = !robotNav.invertEncRight;
     bleManager.println(">> [BLE] DAO CHIEU ENCODER PHAI: " +
                        String(robotNav.invertEncRight ? "INVERTED (-)" : "NORMAL (+)"));
+  } else if (cmd == "STEP_1" || cmd == "STEP" || cmd == "CELL_1") {
+    robotNav.stepCell(1);
+  } else if (cmd.startsWith("STEP=")) {
+    int num = cmd.substring(5).toInt();
+    if (num > 0 && num <= 20) {
+      robotNav.stepCell(num);
+    }
+  } else if (cmd.startsWith("SET_PPC=")) {
+    long val = cmd.substring(8).toInt();
+    if (val >= 100 && val <= 50000) {
+      robotNav.pulsesPerCell = val;
+      bleManager.println(">> [BLE] CAP NHAT PULSES_PER_CELL = " + String(val) + " xung/o (180mm)");
+    }
   } else if (cmd == "STATUS" || cmd == "GET") {
     printStatus();
   }
@@ -171,6 +184,11 @@ void CommandHandler::sendTelemetry() {
         ",\"err\":" + String(robotNav.currentWallError, 1) +
         ",\"db\":" + String(robotNav.wallDeadband, 1) +
         ",\"el\":" + String(encL) + ",\"er\":" + String(encR) +
+        ",\"ppc\":" + String(robotNav.pulsesPerCell) +
+        ",\"step\":" + String(robotNav.stepCellActive ? "true" : "false") +
+        ",\"sstart\":" + String(robotNav.stepStartPulses) +
+        ",\"starg\":" + String(robotNav.stepTargetPulses) +
+        ",\"stravel\":" + String(robotNav.stepTraveledPulses) +
         ",\"lc\":" + String(robotNav.leftCompensation, 1) +
         ",\"rc\":" + String(robotNav.rightCompensation, 1) +
         ",\"spd\":" + String(robotNav.turnSpeed) +
@@ -204,6 +222,7 @@ void CommandHandler::printStatus() {
                " / " + String(dRight) + " mm\n";
   statusMsg += "DEADBAND: " + String(robotNav.wallDeadband, 1) +
                " mm | ERROR: " + String(robotNav.currentWallError, 1) + " mm\n";
+  statusMsg += "PULSES/CELL: " + String(robotNav.pulsesPerCell) + " pulses (180mm)\n";
   statusMsg += "PARAMS -> LEFT_COMP: " + String(robotNav.leftCompensation, 1) +
                " | RIGHT_COMP: " + String(robotNav.rightCompensation, 1) +
                " | SPEED: " + String(robotNav.turnSpeed) + "\n";

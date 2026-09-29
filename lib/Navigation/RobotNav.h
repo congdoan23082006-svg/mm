@@ -26,11 +26,22 @@ public:
   void updatePIDLoop();
   void startPID();
   void stopPID();
+  void stepCell(int numCells = 1);
 
   // Encoder helper methods
   long getLeftEncoder() const;
   long getRightEncoder() const;
   void resetEnc();
+
+  // Chạy từng ô theo Encoder (Cell Stepping)
+  long pulsesPerCell;
+  bool stepCellActive;
+  long stepStartPulses;
+  long stepStartL;
+  long stepStartR;
+  long stepTargetPulses;
+  long stepTraveledPulses;
+  unsigned long stepStartTime;
 
   // Các biến thông số có thể điều chỉnh
   float leftCompensation;

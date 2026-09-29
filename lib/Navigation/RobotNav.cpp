@@ -45,8 +45,17 @@ RobotNav::RobotNav()
   _lastEncLeft = 0;
   _lastEncRight = 0;
   _startEncLeft = 0;
-  _startEncRight = 0;
   _smoothError = 0.0f;
+
+  // Chạy từng ô theo xung Encoder (Cell Stepping)
+  pulsesPerCell = 1000;
+  stepCellActive = false;
+  stepStartPulses = 0;
+  stepStartL = 0;
+  stepStartR = 0;
+  stepTargetPulses = 0;
+  stepTraveledPulses = 0;
+  stepStartTime = 0;
 }
 
 long RobotNav::getLeftEncoder() const {
@@ -224,7 +233,25 @@ void RobotNav::startPID() {
 void RobotNav::stopPID() {
   pidRunActive = false;
   autoTestMode = false;
+  stepCellActive = false;
   stopMotors();
+}
+
+void RobotNav::stepCell(int numCells) {
+  if (numCells <= 0) return;
+  startPID(); // Kích hoạt PID bám tường và giữ hướng thẳng
+  stepCellActive = true;
+  stepStartTime = millis();
+  stepStartL = getLeftEncoder();
+  stepStartR = getRightEncoder();
+  stepStartPulses = (stepStartL + stepStartR) / 2;
+  stepTargetPulses = (long)numCells * pulsesPerCell;
+  stepTraveledPulses = 0;
+
+  String msg = ">> [CELL] BAT DAU TIEN " + String(numCells) + " O (" +
+               String(stepTargetPulses) + " xung)...";
+  Serial.println(msg);
+  bleManager.println(msg);
 }
 
 void RobotNav::updateSensors() {
@@ -325,13 +352,47 @@ void RobotNav::updatePIDLoop() {
 
   // 1. Phanh dừng an toàn khi gặp vách tường trước
   if (frontReady && dF > 20 && dF <= frontStopDist) {
-    stopMotors();
-    pidRunActive = false;
+    brakeMotors();
+    stopPID();
     String msg =
         ">> [PID] PHANH DUNG: GAP VAC TUONG TRUOC (" + String(dF) + " mm)";
     Serial.println(msg);
     bleManager.println(msg);
     return;
+  }
+
+  // 2. Kiểm tra cự ly chạy theo số ô Encoder (Cell Stepping)
+  if (stepCellActive) {
+    long curL = getLeftEncoder();
+    long curR = getRightEncoder();
+    long distL = labs(curL - stepStartL);
+    long distR = labs(curR - stepStartR);
+    long distTraveled = (distL + distR) / 2;
+    stepTraveledPulses = distTraveled;
+
+    // Đạt điều kiện dừng khi:
+    // a) Quãng đường trung bình 2 bánh đạt đủ targetPulses
+    // b) HOẶC 1 trong 2 bánh đạt đủ targetPulses (phòng ngừa 1 bánh trượt/lỗi encoder)
+    // c) HOẶC timeout an toàn 4.5 giây phòng ngừa xe chạy vô tận
+    bool pulseReached = (distTraveled >= stepTargetPulses) ||
+                        (distL >= stepTargetPulses) ||
+                        (distR >= stepTargetPulses);
+    bool timeoutSafe = (millis() - stepStartTime > 4500);
+
+    if (pulseReached || timeoutSafe) {
+      brakeMotors();
+      stopPID();
+      String msg = ">> [CELL] DA HOAN THANH TIEN O! Xung: " + String(distTraveled) +
+                   "/" + String(stepTargetPulses) + " xung (L:" + String(distL) +
+                   ", R:" + String(distR) + "). Phanh dung.";
+      if (timeoutSafe && !pulseReached) {
+        msg = ">> [CELL] TIMEOUT AN TOAN 4.5S! Xung: " + String(distTraveled) +
+              "/" + String(stepTargetPulses) + " xung. Phanh dung.";
+      }
+      Serial.println(msg);
+      bleManager.println(msg);
+      return;
+    }
   }
 
   bool hasLeftWall = (leftReady && dL > 20 && dL < wallThreshold);

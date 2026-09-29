@@ -771,8 +771,9 @@
 
         <!-- NAVIGATION TABS -->
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab(1)">🚗 Chế Độ: Test Xe (All-in-One)</button>
-            <button class="tab-btn" onclick="switchTab(2)">🖥️ Terminal Console BLE</button>
+            <button class="tab-btn active" onclick="switchTab(1)">🚗 Chế Độ 1: Test Xe (Bám Tường PID)</button>
+            <button class="tab-btn" onclick="switchTab(2)">🏁 Chế Độ 2: Test Đi 1 Ô (Encoder)</button>
+            <button class="tab-btn" onclick="switchTab(3)">🖥️ Terminal Console BLE</button>
         </div>
 
         <!-- TAB 1: TEST XE TOÀN DIỆN -->
@@ -951,11 +952,14 @@
                     <span style="font-size: 12px; color: var(--text-muted);">Điều khiển tức thời qua Bluetooth</span>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
-                    <button class="btn-pid-run" style="grid-column: span 1; padding: 14px;" onclick="sendCmd('PID_ON')">
-                        🚀 KÍCH HOẠT PID BÁM TƯỜNG
+                    <button class="btn-step" style="padding: 14px; font-size: 14px; font-weight: 800; background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(0,242,254,0.3)); border: 1px solid var(--success-green); color: #fff;" onclick="switchTab(2)">
+                        🏁 CHUYỂN SANG CHẾ ĐỘ 2: ĐI 1 Ô ➔
                     </button>
-                    <button class="btn-brake" style="grid-column: span 1; padding: 14px;" onclick="sendCmd('PID_OFF')">
-                        🛑 DỪNG DỪNG XE (PID OFF)
+                    <button class="btn-pid-run" style="padding: 14px;" onclick="sendCmd('PID_ON')">
+                        🚀 KÍCH HOẠT PID BÁM TƯỜNG (CHẠY TỰ DO)
+                    </button>
+                    <button class="btn-brake" style="padding: 14px;" onclick="sendCmd('PID_OFF')">
+                        🛑 DỪNG XE (PID OFF)
                     </button>
                     <button class="btn-turn-left" onclick="sendCmd('TL')">
                         <span>◀</span> QUAY THỬ RẼ TRÁI 90°
@@ -1112,8 +1116,126 @@
             </div>
         </div>
 
-        <!-- TAB 2: TERMINAL CONSOLE -->
+        <!-- TAB 2: CHẾ ĐỘ 2 - TEST ĐI 1 Ô THEO XUNG ENCODER -->
         <div class="tab-panel" id="tab2">
+            <!-- PHẦN 1: GIÁM SÁT TIẾN TRÌNH ĐI 1 Ô -->
+            <div class="card" style="margin-bottom: 24px; padding: 22px;">
+                <div class="card-header" style="margin-bottom: 16px;">
+                    <div>
+                        <div class="card-title">🏁 Chế Độ 2: Giám Sát Tiến Trình Đi Đúng 1 Ô (180mm)</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                            Đo chính xác quãng đường bằng Encoder + PID bám tường tự động giữ xe ở tâm ô
+                        </div>
+                    </div>
+                    <span class="dock-status" id="stepCellStatusBadge" style="background: rgba(0,242,254,0.15); color: var(--primary-cyan); border-color: rgba(0,242,254,0.4); font-size: 13px; padding: 4px 14px;">
+                        SẴN SÀNG
+                    </span>
+                </div>
+
+                <!-- THANH TIẾN TRÌNH % Ô -->
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; margin-bottom: 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #fff;">Quãng Đường Đã Đi Trong 1 Ô:</span>
+                        <span id="stepProgressText" style="font-size: 15px; font-weight: 800; color: var(--primary-cyan); font-family: monospace;">0 / 1000 xung (0%)</span>
+                    </div>
+                    <div style="height: 16px; background: rgba(255,255,255,0.08); border-radius: 8px; overflow: hidden; position: relative;">
+                        <div id="stepProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0077ff, var(--primary-cyan), var(--success-green)); transition: width 0.1s linear;"></div>
+                    </div>
+                </div>
+
+                <!-- 4 THẺ ĐỒNG HỒ ĐO XUNG VÀ GÓC -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,242,254,0.25); border-radius: 12px; padding: 14px; text-align: center;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--primary-cyan); margin-bottom: 4px;">🛞 Xung Bánh Trái</div>
+                        <div id="tab2EncL" style="font-size: 26px; font-weight: 900; font-family: monospace; color: #fff;">0</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">xung đo được</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(217,70,239,0.25); border-radius: 12px; padding: 14px; text-align: center;">
+                        <div style="font-size: 12px; font-weight: 700; color: #d946ef; margin-bottom: 4px;">🛞 Xung Bánh Phải</div>
+                        <div id="tab2EncR" style="font-size: 26px; font-weight: 900; font-family: monospace; color: #fff;">0</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">xung đo được</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 14px; text-align: center;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--success-green); margin-bottom: 4px;">🎯 Xung Mục Tiêu (1 Ô)</div>
+                        <div id="tab2TargetPulses" style="font-size: 26px; font-weight: 900; font-family: monospace; color: var(--success-green);">1000</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">chuẩn 1 ô (180 mm)</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; text-align: center;">
+                        <div style="font-size: 12px; font-weight: 700; color: #f59e0b; margin-bottom: 4px;">🧭 Lệch Hướng (Yaw)</div>
+                        <div id="tab2Yaw" style="font-size: 26px; font-weight: 900; font-family: monospace; color: #f59e0b;">0.0°</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">góc mũi xe</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHẦN 2: THAO TÁC & CÀI ĐẶT SỐ XUNG 1 Ô -->
+            <div class="grid-2col">
+                <!-- CỘT 1: THAO TÁC CHẠY 1 Ô -->
+                <div class="card" style="padding: 22px;">
+                    <div class="card-header">
+                        <div class="card-title">🚀 Thao Tác Chạy 1 Ô</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <button class="btn-step" style="padding: 16px; font-size: 16px; font-weight: 900; background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(0,242,254,0.35)); border: 2px solid var(--success-green); color: #fff; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 20px rgba(16,185,129,0.3);" onclick="startStepOneCell()">
+                            🏁 BẮT ĐẦU CHẠY ĐÚNG 1 Ô (START)
+                        </button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn-brake" style="padding: 12px; font-weight: 700;" onclick="sendCmd('PID_OFF')">
+                                🛑 DỪNG XE (STOP)
+                            </button>
+                            <button class="btn-step" style="padding: 12px; font-weight: 700; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #fff;" onclick="resetStepEncoders()">
+                                🔄 Reset Xung Về 0
+                            </button>
+                        </div>
+                        <button class="btn-step" style="padding: 12px; font-size: 13px; font-weight: 700; background: rgba(245,158,11,0.15); border: 1px solid var(--warning-amber); color: #fff;" onclick="calibrateCellPulses()">
+                            📏 Lấy Xung Thực Tế Vừa Đẩy Làm 1 Ô (Calib)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CỘT 2: CĂN CHỈNH SỐ XUNG MẶC ĐỊNH 1000 XUNG -->
+                <div class="card" style="padding: 22px;">
+                    <div class="card-header">
+                        <div class="card-title">⚙️ Cài Đặt Số Xung Cho Đi 1 Ô</div>
+                        <span style="font-size: 12px; color: var(--primary-cyan); font-weight: 700;">Mặc định: 1000</span>
+                    </div>
+
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">Số Xung Cho Đi 1 Ô (180mm):</div>
+                            <div class="param-value-badge" id="valBadgePPC" style="font-size: 16px; font-weight: 900; color: var(--success-green); background: rgba(16,185,129,0.2);">1000 xung</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('ppc', -50)">-50</button>
+                            <button class="btn-step" onclick="stepParam('ppc', -10)">-10</button>
+                            <input type="range" class="slider-input" id="sliderPPC" min="100" max="6000" step="10" value="1000" oninput="updateBadge('PPC', this.value)" onchange="applyParam('PPC')">
+                            <button class="btn-step" onclick="stepParam('ppc', 10)">+10</button>
+                            <button class="btn-step" onclick="stepParam('ppc', 50)">+50</button>
+                            <button class="btn-apply" onclick="applyParam('PPC')">LƯU</button>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <span style="font-size: 11px; color: var(--text-muted);">Càng tăng số xung $\rightarrow$ Xe chạy càng xa</span>
+                            <button class="btn-step" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="resetDefaultPPC()">
+                                ↺ Về Mặc Định 1000 Xung
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- HƯỚNG DẪN ĐO ĐẠC -->
+                    <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; margin-top: 14px;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--primary-cyan); margin-bottom: 4px;">💡 Cách chỉnh chuẩn 1 ô trong 10 giây:</div>
+                        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+                            1. Bấm <b>Reset Xung Về 0</b>.<br>
+                            2. Dùng thước đẩy xe tiến thẳng đúng 180 mm trên sa hình.<br>
+                            3. Bấm <b>Lấy Xung Thực Tế Vừa Đẩy</b> $\rightarrow$ Tự động gán số xung chuẩn!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TERMINAL CONSOLE -->
+        <div class="tab-panel" id="tab3">
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">🖥️ Nhật Ký BLE Terminal (Real-time)</div>
@@ -1327,12 +1449,68 @@
         let currentDL = 161;
         let currentDF = 110;
         let currentDR = 152;
+        let liveEncL = 0;
+        let liveEncR = 0;
 
         function calibrateCenterCurrent() {
             if (!confirm(`Xác nhận dùng cự ly hiện tại:\n- Trái: ${currentDL} mm\n- Phải: ${currentDR} mm\n- Trước: ${currentDF} mm\nLàm mốc chuẩn tâm ô cho Robot?`)) return;
             sendCmd(`SET_TLD=${currentDL}`);
             sendCmd(`SET_TRD=${currentDR}`);
             log(`>> [HIỆU CHUẨN] Đã gán chuẩn tâm ô: Trái=${currentDL}mm, Phải=${currentDR}mm`, 'sys');
+        }
+
+        function calibrateCellPulses() {
+            const avg = Math.round((Math.abs(liveEncL) + Math.abs(liveEncR)) / 2);
+            if (avg <= 20) {
+                alert(`⚠️ Xung Encoder hiện tại quá nhỏ (${avg} xung).\n\nCách dùng:\n1. Bấm nút 'Reset Xung Encoder'\n2. Dùng thước đẩy xe tiến thẳng đúng 180 mm (1 ô mê cung)\n3. Bấm lại nút này để hệ thống tự động gán mốc xung!`);
+                return;
+            }
+            if (!confirm(`Xác nhận dùng giá trị xung đo được:\n- Bánh Trái: ${liveEncL} xung\n- Bánh Phải: ${liveEncR} xung\n- Trung bình: ${avg} xung\n\nLàm mốc quy chuẩn cho 1 Ô Mê Cung (180mm)?`)) return;
+            sendCmd(`SET_PPC=${avg}`);
+            updateBadge('PPC', avg);
+            log(`>> [HIỆU CHUẨN Ô] Đã lưu mốc xung 1 ô (180mm) = ${avg} xung`, 'sys');
+        }
+
+        let stepCellRunning = false;
+        let stepStartEncAvg = 0;
+
+        function startStepOneCell() {
+            stepCellRunning = true;
+            stepStartEncAvg = Math.round((liveEncL + liveEncR) / 2);
+            const badge = document.getElementById('stepCellStatusBadge');
+            if (badge) {
+                badge.textContent = "ĐANG CHẠY 1 Ô...";
+                badge.style.background = "rgba(245, 158, 11, 0.2)";
+                badge.style.color = "var(--warning-amber)";
+                badge.style.borderColor = "var(--warning-amber)";
+            }
+            sendCmd('STEP_1');
+        }
+
+        function resetStepEncoders() {
+            sendCmd('RST_ENC');
+            stepCellRunning = false;
+            stepStartEncAvg = 0;
+            const badge = document.getElementById('stepCellStatusBadge');
+            if (badge) {
+                badge.textContent = "SẴN SÀNG";
+                badge.style.background = "rgba(0, 242, 254, 0.15)";
+                badge.style.color = "var(--primary-cyan)";
+                badge.style.borderColor = "rgba(0, 242, 254, 0.4)";
+            }
+            const bar = document.getElementById('stepProgressBar');
+            if (bar) bar.style.width = '0%';
+            const txt = document.getElementById('stepProgressText');
+            const target = parseInt(document.getElementById('sliderPPC')?.value) || 1000;
+            if (txt) txt.textContent = `0 / ${target} xung (0%)`;
+        }
+
+        function resetDefaultPPC() {
+            const slider = document.getElementById('sliderPPC');
+            if (slider) slider.value = 1000;
+            updateBadge('PPC', 1000);
+            applyParam('PPC');
+            log(">> [CÀI ĐẶT] Đã đặt lại mốc chuẩn mặc định 1000 xung cho 1 ô (180mm)", 'sys');
         }
 
         function parseJSONPacket(data) {
@@ -1485,15 +1663,69 @@
                 }
 
                 if (data.el !== undefined) {
+                    liveEncL = data.el;
                     const encLEl = document.getElementById('valEncL');
                     if (encLEl) encLEl.textContent = data.el;
+                    const t2EncL = document.getElementById('tab2EncL');
+                    if (t2EncL) t2EncL.textContent = data.el;
                 }
                 if (data.er !== undefined) {
+                    liveEncR = data.er;
                     const encREl = document.getElementById('valEncR');
                     if (encREl) encREl.textContent = data.er;
+                    const t2EncR = document.getElementById('tab2EncR');
+                    if (t2EncR) t2EncR.textContent = data.er;
+                }
+                if (data.yaw !== undefined) {
+                    const t2Yaw = document.getElementById('tab2Yaw');
+                    if (t2Yaw) t2Yaw.textContent = `${data.yaw.toFixed(1)}°`;
                 }
 
+                if (data.ppc !== undefined) {
+                    updateBadge('PPC', data.ppc);
+                    const t2Targ = document.getElementById('tab2TargetPulses');
+                    if (t2Targ) t2Targ.textContent = data.ppc;
+                }
                 if (data.fspd !== undefined) updateBadge('FSPD', data.fspd);
+
+                // Cập nhật trạng thái và thanh tiến trình chạy 1 ô (Chế độ 2)
+                const isStep = (data.step === true || data.step === "true");
+                const badge = document.getElementById('stepCellStatusBadge');
+                const pBar = document.getElementById('stepProgressBar');
+                const pTxt = document.getElementById('stepProgressText');
+                const targetPpc = data.ppc || parseInt(document.getElementById('sliderPPC')?.value) || 1000;
+
+                if (isStep) {
+                    stepCellRunning = true;
+                    if (badge) {
+                        badge.textContent = "ĐANG CHẠY 1 Ô...";
+                        badge.style.background = "rgba(245, 158, 11, 0.2)";
+                        badge.style.color = "var(--warning-amber)";
+                        badge.style.borderColor = "var(--warning-amber)";
+                    }
+                    const sTarg = data.starg || targetPpc;
+                    let traveled = 0;
+                    if (data.stravel !== undefined) {
+                        traveled = data.stravel;
+                    } else {
+                        const sStart = data.sstart !== undefined ? data.sstart : stepStartEncAvg;
+                        const curAvg = Math.round((Math.abs(liveEncL) + Math.abs(liveEncR)) / 2);
+                        traveled = Math.max(0, curAvg - sStart);
+                    }
+                    const pct = Math.min(100, Math.max(0, (traveled / sTarg) * 100));
+                    if (pBar) pBar.style.width = pct + '%';
+                    if (pTxt) pTxt.textContent = `${traveled} / ${sTarg} xung (${pct.toFixed(0)}%)`;
+                } else if (stepCellRunning) {
+                    stepCellRunning = false;
+                    if (badge) {
+                        badge.textContent = "ĐÃ HOÀN THÀNH 1 Ô!";
+                        badge.style.background = "rgba(16, 185, 129, 0.25)";
+                        badge.style.color = "var(--success-green)";
+                        badge.style.borderColor = "var(--success-green)";
+                    }
+                    if (pBar) pBar.style.width = '100%';
+                    if (pTxt) pTxt.textContent = `${targetPpc} / ${targetPpc} xung (100%)`;
+                }
             }
             else if (data.type === "turn_res") {
                 document.getElementById('resTarget').textContent = `${data.target.toFixed(1)}°`;
@@ -1516,6 +1748,7 @@
             if (!badge || !slider) return;
 
             if (type === 'SPD' || type === 'FSPD') badge.textContent = val;
+            else if (type === 'PPC') badge.textContent = parseInt(val) + ' xung';
             else if (type === 'KP' || type === 'KD') badge.textContent = parseFloat(val).toFixed(2);
             else if (type === 'KI') badge.textContent = parseFloat(val).toFixed(3);
             else if (type === 'DB') badge.textContent = parseFloat(val).toFixed(1) + ' mm';
