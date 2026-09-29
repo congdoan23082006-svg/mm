@@ -771,359 +771,349 @@
 
         <!-- NAVIGATION TABS -->
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab(1)">🎯 Chế Độ 1: Test Quay Góc & Căn Chỉnh</button>
-            <button class="tab-btn" onclick="switchTab(2)">⚙️ Chế Độ 2: Căn Chỉnh PID Bám Tường</button>
-            <button class="tab-btn" onclick="switchTab(3)">📡 Chế Độ 3: Cảm Biến Khoảng Cách</button>
-            <button class="tab-btn" onclick="switchTab(4)">🖥️ Terminal Console BLE</button>
+            <button class="tab-btn active" onclick="switchTab(1)">🚗 Chế Độ: Test Xe (All-in-One)</button>
+            <button class="tab-btn" onclick="switchTab(2)">🖥️ Terminal Console BLE</button>
         </div>
 
-        <!-- TAB 1: TEST QUAY GÓC & CĂN CHỈNH -->
+        <!-- TAB 1: TEST XE TOÀN DIỆN -->
         <div class="tab-panel active" id="tab1">
-            <div class="grid-2col">
-                <!-- CỘT TRÁI: ĐỒNG HỒ GÓC YAW & KẾT QUẢ QUAY -->
-                <div>
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">🧭 Đồng Hồ Góc Yaw (MPU6050)</div>
-                            <span style="font-size: 12px; color: var(--text-muted);">Cập nhật 200ms</span>
+            <!-- PHẦN 1: GIÁM SÁT REAL-TIME TRỰC QUAN -->
+            <div class="grid-2col" style="margin-bottom: 24px;">
+                <!-- KHỐI 1: CẢM BIẾN TOF & MÔ PHỎNG Ô MÊ CUNG -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-header">
+                        <div class="card-title">📡 Cảm Biến VL53L0X & Mô Phỏng Ô Mê Cung</div>
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Mốc: T:161 | F:110 | R:152</span>
+                    </div>
+
+                    <div class="maze-arena-wrapper">
+                        <!-- DOCK TRÁI -->
+                        <div class="sensor-dock">
+                            <div class="dock-badge">TRÁI (LEFT)</div>
+                            <div class="dock-val" id="distLeft">161</div>
+                            <div class="dock-unit">mm</div>
+                            <div class="dock-status" id="statusWallLeft">CÓ TƯỜNG</div>
                         </div>
 
-                        <div class="gauge-container">
-                            <div class="compass-outer">
-                                <div class="compass-inner">
-                                    <div class="needle" id="needle"></div>
+                        <!-- Ô MAZE Ở GIỮA -->
+                        <div class="maze-cell-stage">
+                            <!-- VÁCH TRƯỚC -->
+                            <div class="wall-bar wall-top" id="wallTopBar"></div>
+                            <!-- VÁCH TRÁI -->
+                            <div class="wall-bar wall-left" id="wallLeftBar"></div>
+                            <!-- VÁCH PHẢI -->
+                            <div class="wall-bar wall-right" id="wallRightBar"></div>
+
+                            <!-- DOCK TRƯỚC -->
+                            <div class="sensor-dock dock-top">
+                                <span class="dock-badge" style="margin: 0;">TRƯỚC:</span>
+                                <span class="dock-val" id="distFront" style="font-size: 16px;">110</span>
+                                <span class="dock-unit" style="margin: 0;">mm</span>
+                                <span class="dock-status" id="statusWallFront">CÓ TƯỜNG</span>
+                            </div>
+
+                            <!-- THÂN ROBOT MICROMOUSE -->
+                            <div class="robot-mouse-body" id="mouseBody">
+                                <div style="font-size: 32px; filter: drop-shadow(0 0 8px rgba(0,242,254,0.5));">🐭</div>
+                                <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--primary-cyan); margin-top: 4px;">MICROMOUSE</div>
+                                <div class="cell-dev-pill" id="cellDevPill">Lệch tâm: 0.0 mm (Chuẩn tâm)</div>
+                            </div>
+                        </div>
+
+                        <!-- DOCK PHẢI -->
+                        <div class="sensor-dock">
+                            <div class="dock-badge">PHẢI (RIGHT)</div>
+                            <div class="dock-val" id="distRight">152</div>
+                            <div class="dock-unit">mm</div>
+                            <div class="dock-status" id="statusWallRight">CÓ TƯỜNG</div>
+                        </div>
+                    </div>
+
+                    <!-- 3 BẢNG THÔNG SỐ VẠCH ĐO CHI TIẾT -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 16px;">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px; padding: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--primary-cyan);">
+                                <span>⬅️ Trái</span>
+                                <span style="color: var(--text-muted);">&lt; 230mm</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-top: 6px;">
+                                <div id="distLeftBar" style="height: 100%; width: 53%; background: linear-gradient(90deg, #0077ff, var(--primary-cyan)); transition: width 0.15s ease;"></div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,198,255,0.25); border-radius: 10px; padding: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #00c6ff;">
+                                <span>⬆️ Trước</span>
+                                <span style="color: var(--text-muted);">&le; 100mm</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-top: 6px;">
+                                <div id="distFrontBar" style="height: 100%; width: 44%; background: linear-gradient(90deg, #00c6ff, #0072ff); transition: width 0.15s ease;"></div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(217,70,239,0.25); border-radius: 10px; padding: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #d946ef;">
+                                <span>➡️ Phải</span>
+                                <span style="color: var(--text-muted);">&lt; 230mm</span>
+                            </div>
+                            <div style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-top: 6px;">
+                                <div id="distRightBar" style="height: 100%; width: 50%; background: linear-gradient(90deg, #7928ca, #d946ef); transition: width 0.15s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KHỐI 2: ĐỒNG HỒ GÓC YAW & TỐC ĐỘ 2 BÁNH -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- LA BÀN YAW -->
+                    <div class="card" style="margin-bottom: 0; padding: 20px;">
+                        <div class="card-header" style="margin-bottom: 12px;">
+                            <div class="card-title">🧭 Đồng Hồ Góc Yaw (MPU6050)</div>
+                            <span style="font-size: 12px; color: var(--text-muted);">Real-time</span>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-around; gap: 16px;">
+                            <div class="compass-outer" style="width: 150px; height: 150px;">
+                                <div class="compass-inner" style="width: 120px; height: 120px;">
+                                    <div class="needle" id="needle" style="height: 55px;"></div>
                                 </div>
                             </div>
-                            <div class="yaw-readout">
-                                <div class="yaw-value" id="yawVal">0.0°</div>
+                            <div style="text-align: center;">
+                                <div class="yaw-value" id="yawVal" style="font-size: 32px;">0.0°</div>
                                 <div class="yaw-label">Góc Yaw Hiện Tại</div>
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <button class="btn-step" style="padding: 8px 12px; font-weight: 600; font-size: 12px; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: #fff; cursor: pointer; border-radius: 8px;" onclick="sendCmd('RESET_YAW')">
+                                        🔄 Reset 0°
+                                    </button>
+                                    <button class="btn-step" style="padding: 8px 12px; font-weight: 600; font-size: 12px; background: rgba(121, 40, 202, 0.25); border: 1px solid var(--primary-purple); color: #fff; cursor: pointer; border-radius: 8px;" onclick="sendCmd('CALIB')">
+                                        ⚖️ Calib Gyro
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 10px; margin-top: 16px; margin-bottom: 16px;">
-                            <button class="btn-step" style="flex: 1; padding: 10px; font-weight: 600; font-size: 13px; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: #fff; cursor: pointer; border-radius: 8px;" onclick="sendCmd('RESET_YAW')">
-                                🔄 Reset Góc Về 0°
-                            </button>
-                            <button class="btn-step" style="flex: 1; padding: 10px; font-weight: 600; font-size: 13px; background: rgba(121, 40, 202, 0.25); border: 1px solid var(--primary-purple); color: #fff; cursor: pointer; border-radius: 8px;" onclick="sendCmd('CALIB')">
-                                ⚖️ Calib Lại Gyro (Đứng Yên)
-                            </button>
-                        </div>
-
-                        <div class="result-box">
-                            <div class="card-title" style="font-size: 14px; margin-bottom: 12px;">📊 Kết Quả Lần Quay Gần Nhất</div>
-                            <div class="result-row">
-                                <span>Góc Mục Tiêu:</span>
-                                <span class="val-highlight" id="resTarget">--°</span>
+                        <!-- KẾT QUẢ QUAY GẦN NHẤT -->
+                        <div class="result-box" style="margin-top: 14px; padding: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-size: 12px; font-weight: 700; color: #fff;">📊 Kết Quả Quay Gần Nhất:</span>
+                                <span id="resStatus" style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Chưa có dữ liệu</span>
                             </div>
-                            <div class="result-row">
-                                <span>Góc Đã Quay Thực Tế:</span>
-                                <span class="val-highlight" id="resTurned">--°</span>
-                            </div>
-                            <div class="result-row">
-                                <span>Độ Lệch Bị Lố (Error $\Delta$):</span>
-                                <span class="val-error" id="resError">--°</span>
-                            </div>
-                            <div class="result-row">
-                                <span>Trạng Thái:</span>
-                                <span id="resStatus" style="font-weight: 700; color: var(--text-muted);">Chưa có dữ liệu</span>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                                <span>Mục tiêu: <b class="val-highlight" id="resTarget">--°</b></span>
+                                <span>Thực tế: <b class="val-highlight" id="resTurned">--°</b></span>
+                                <span>Lệch: <b class="val-error" id="resError">--°</b></span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- CỘT PHẢI: BẢNG CĂN CHỈNH LIVE & NÚT QUAY THỬ -->
-                <div>
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">⚙️ Bù Quán Tính Quay Góc Live</div>
+                    <!-- TỐC ĐỘ REAL-TIME 2 BÁNH XE -->
+                    <div class="card" style="margin-bottom: 0; padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-weight: 700; font-size: 14px; color: var(--primary-cyan);">⚡ Tốc Độ 2 Bánh (PWM 0-255):</span>
+                            <span id="diffSpeedBadge" style="font-size: 12px; padding: 2px 10px; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--text-muted); font-weight: 600;">Chênh lệch: 0</span>
                         </div>
-
-                        <!-- PARAM 1: LEFT COMPENSATION -->
-                        <div class="param-group">
-                            <div class="param-header">
-                                <div class="param-title">LEFT_COMPENSATION (Bù Rẽ Trái):</div>
-                                <div class="param-value-badge" id="valBadgeLC">18.0°</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px; padding: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: #e2e8f0;">🛞 Bánh Trái:</span>
+                                    <span id="valLiveLSpd" style="font-size: 18px; font-weight: 800; color: var(--primary-cyan);">0</span>
+                                </div>
+                                <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+                                    <div id="barLiveLSpd" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0077ff, var(--primary-cyan)); transition: width 0.15s ease;"></div>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; display: flex; justify-content: space-between;">
+                                    <span>Xung Enc:</span>
+                                    <span id="valEncL" style="font-family: monospace; font-weight: 700; color: var(--primary-cyan);">0</span>
+                                </div>
                             </div>
-                            <div class="slider-controls">
-                                <button class="btn-step" onclick="stepParam('lc', -0.5)">-</button>
-                                <input type="range" class="slider-input" id="sliderLC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('LC', this.value)" onchange="applyParam('LC')">
-                                <button class="btn-step" onclick="stepParam('lc', 0.5)">+</button>
-                                <button class="btn-apply" onclick="applyParam('LC')">Gửi</button>
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(121,40,202,0.35); border-radius: 10px; padding: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: #e2e8f0;">🛞 Bánh Phải:</span>
+                                    <span id="valLiveRSpd" style="font-size: 18px; font-weight: 800; color: #d946ef;">0</span>
+                                </div>
+                                <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+                                    <div id="barLiveRSpd" style="height: 100%; width: 0%; background: linear-gradient(90deg, #7928ca, #d946ef); transition: width 0.15s ease;"></div>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; display: flex; justify-content: space-between;">
+                                    <span>Xung Enc:</span>
+                                    <span id="valEncR" style="font-family: monospace; font-weight: 700; color: #d946ef;">0</span>
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- PARAM 2: RIGHT COMPENSATION -->
-                        <div class="param-group">
-                            <div class="param-header">
-                                <div class="param-title">RIGHT_COMPENSATION (Bù Rẽ Phải):</div>
-                                <div class="param-value-badge" id="valBadgeRC">18.0°</div>
-                            </div>
-                            <div class="slider-controls">
-                                <button class="btn-step" onclick="stepParam('rc', -0.5)">-</button>
-                                <input type="range" class="slider-input" id="sliderRC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('RC', this.value)" onchange="applyParam('RC')">
-                                <button class="btn-step" onclick="stepParam('rc', 0.5)">+</button>
-                                <button class="btn-apply" onclick="applyParam('RC')">Gửi</button>
-                            </div>
-                        </div>
-
-                        <!-- PARAM 3: TURN SPEED -->
-                        <div class="param-group">
-                            <div class="param-header">
-                                <div class="param-title">TURN_SPEED (Tốc độ PWM 0-255):</div>
-                                <div class="param-value-badge" id="valBadgeSPD">50</div>
-                            </div>
-                            <div class="slider-controls">
-                                <button class="btn-step" onclick="stepParam('spd', -5)">-</button>
-                                <input type="range" class="slider-input" id="sliderSPD" min="40" max="255" step="5" value="50" oninput="updateBadge('SPD', this.value)" onchange="applyParam('SPD')">
-                                <button class="btn-step" onclick="stepParam('spd', 5)">+</button>
-                                <button class="btn-apply" onclick="applyParam('SPD')">Gửi</button>
-                            </div>
-                        </div>
-
-                        <!-- ACTION TEST BUTTONS -->
-                        <div class="action-grid">
-                            <button class="btn-turn-left" onclick="sendCmd('TL')">
-                                <span>◀</span> QUAY THỬ RẼ TRÁI 90°
-                            </button>
-                            <button class="btn-turn-right" onclick="sendCmd('TR')">
-                                QUAY THỬ RẼ PHẢI 90° <span>▶</span>
-                            </button>
-                            <button class="btn-pid-run" onclick="sendCmd('PID_ON')">
-                                🚀 KÍCH HOẠT PID BÁM TƯỜNG TIẾN THẲNG
-                            </button>
-                            <button class="btn-brake" onclick="sendCmd('PID_OFF')">
-                                🛑 DỪNG DỪNG XE (PID OFF)
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- TAB 2: CĂN CHỈNH PID BÁM TƯỜNG -->
-        <div class="tab-panel" id="tab2">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">🎛️ Căn Chỉnh Hằng Số PID Bám Tường & Giám Sát Tốc Độ Bánh</div>
+            <!-- PHẦN 2: TRUNG TÂM ĐIỀU KHIỂN THAO TÁC TEST XE (ACTION HUB) -->
+            <div class="card" style="margin-bottom: 24px; padding: 20px;">
+                <div class="card-header" style="margin-bottom: 16px;">
+                    <div class="card-title">🚀 Trung Tâm Thao Tác Test Xe</div>
+                    <span style="font-size: 12px; color: var(--text-muted);">Điều khiển tức thời qua Bluetooth</span>
                 </div>
-
-                <!-- LIVE MOTOR SPEED MONITOR -->
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-weight: 700; font-size: 14px; color: var(--primary-cyan);">⚡ Tốc Độ Real-Time 2 Bánh (PWM 0-255):</span>
-                        <span id="diffSpeedBadge" style="font-size: 12px; padding: 2px 10px; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--text-muted); font-weight: 600;">Chênh lệch: 0</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <!-- BÁNH TRÁI -->
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px; padding: 14px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-size: 13px; font-weight: 600; color: #e2e8f0;">🛞 Bánh Trái (Left Motor):</span>
-                                <span id="valLiveLSpd" style="font-size: 20px; font-weight: 800; color: var(--primary-cyan);">0</span>
-                            </div>
-                            <div style="height: 10px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden;">
-                                <div id="barLiveLSpd" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0077ff, var(--primary-cyan)); transition: width 0.15s ease;"></div>
-                            </div>
-                        </div>
-                        <!-- BÁNH PHẢI -->
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(121,40,202,0.35); border-radius: 10px; padding: 14px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-size: 13px; font-weight: 600; color: #e2e8f0;">🛞 Bánh Phải (Right Motor):</span>
-                                <span id="valLiveRSpd" style="font-size: 20px; font-weight: 800; color: #d946ef;">0</span>
-                            </div>
-                            <div style="height: 10px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden;">
-                                <div id="barLiveRSpd" style="height: 100%; width: 0%; background: linear-gradient(90deg, #7928ca, #d946ef); transition: width 0.15s ease;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BASE FORWARD SPEED -->
-                <div class="param-group">
-                    <div class="param-header">
-                        <div class="param-title">Tốc Độ Chạy Thẳng Cơ Sở (Base Speed 0-255):</div>
-                        <div class="param-value-badge" id="valBadgeFSPD">95</div>
-                    </div>
-                    <div class="slider-controls">
-                        <button class="btn-step" onclick="stepParam('fspd', -5)">-</button>
-                        <input type="range" class="slider-input" id="sliderFSPD" min="40" max="255" step="5" value="95" oninput="updateBadge('FSPD', this.value)" onchange="applyParam('FSPD')">
-                        <button class="btn-step" onclick="stepParam('fspd', 5)">+</button>
-                        <button class="btn-apply" onclick="applyParam('FSPD')">Gửi Tốc Độ</button>
-                    </div>
-                </div>
-
-                <!-- PID Kp -->
-                <div class="param-group">
-                    <div class="param-header">
-                        <div class="param-title">Kp (Hệ Số Tỉ Lệ - Proportional):</div>
-                        <div class="param-value-badge" id="valBadgeKP">1.20</div>
-                    </div>
-                    <div class="slider-controls">
-                        <button class="btn-step" onclick="stepParam('kp', -0.1)">-</button>
-                        <input type="range" class="slider-input" id="sliderKP" min="0.0" max="5.0" step="0.05" value="1.20" oninput="updateBadge('KP', this.value)" onchange="applyParam('KP')">
-                        <button class="btn-step" onclick="stepParam('kp', 0.1)">+</button>
-                        <button class="btn-apply" onclick="applyParam('KP')">Gửi Kp</button>
-                    </div>
-                </div>
-
-                <!-- PID Ki -->
-                <div class="param-group">
-                    <div class="param-header">
-                        <div class="param-title">Ki (Hệ Số Tích Phân - Integral):</div>
-                        <div class="param-value-badge" id="valBadgeKI">0.005</div>
-                    </div>
-                    <div class="slider-controls">
-                        <button class="btn-step" onclick="stepParam('ki', -0.001)">-</button>
-                        <input type="range" class="slider-input" id="sliderKI" min="0.000" max="0.050" step="0.001" value="0.005" oninput="updateBadge('KI', this.value)" onchange="applyParam('KI')">
-                        <button class="btn-step" onclick="stepParam('ki', 0.001)">+</button>
-                        <button class="btn-apply" onclick="applyParam('KI')">Gửi Ki</button>
-                    </div>
-                </div>
-
-                <!-- PID Kd -->
-                <div class="param-group">
-                    <div class="param-header">
-                        <div class="param-title">Kd (Hệ Số Vi Phân - Derivative):</div>
-                        <div class="param-value-badge" id="valBadgeKD">0.25</div>
-                    </div>
-                    <div class="slider-controls">
-                        <button class="btn-step" onclick="stepParam('kd', -0.05)">-</button>
-                        <input type="range" class="slider-input" id="sliderKD" min="0.00" max="2.00" step="0.05" value="0.25" oninput="updateBadge('KD', this.value)" onchange="applyParam('KD')">
-                        <button class="btn-step" onclick="stepParam('kd', 0.05)">+</button>
-                        <button class="btn-apply" onclick="applyParam('KD')">Gửi Kd</button>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 16px; margin-top: 24px;">
-                    <button class="btn-pid-run" style="flex: 1;" onclick="sendCmd('PID_ON')">
-                        ▶ BẮT ĐẦU CHẠY PID BÁM TƯỜNG
-                    </button>
-                    <button class="btn-brake" style="flex: 1;" onclick="sendCmd('PID_OFF')">
-                        ⏹ DỪNG CHẠY PID
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 3: CẢM BIẾN KHOẢNG CÁCH -->
-        <div class="tab-panel" id="tab3">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">📡 Cảm Biến Khoảng Cách VL53L0X & Mô Phỏng Ô Mê Cung</div>
-                    <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Mốc Chuẩn Tâm Ô: T:161mm | F:110mm | R:152mm</div>
-                </div>
-
-                <!-- MAZE ARENA: KHÔNG CÒN BỊ ĐÈ CHỮ -->
-                <div class="maze-arena-wrapper">
-                    <!-- DOCK TRÁI -->
-                    <div class="sensor-dock">
-                        <div class="dock-badge">TRÁI (LEFT)</div>
-                        <div class="dock-val" id="distLeft">161</div>
-                        <div class="dock-unit">mm</div>
-                        <div class="dock-status" id="statusWallLeft">CÓ TƯỜNG</div>
-                    </div>
-
-                    <!-- Ô MAZE Ở GIỮA -->
-                    <div class="maze-cell-stage">
-                        <!-- VÁCH TRƯỚC -->
-                        <div class="wall-bar wall-top" id="wallTopBar"></div>
-                        <!-- VÁCH TRÁI -->
-                        <div class="wall-bar wall-left" id="wallLeftBar"></div>
-                        <!-- VÁCH PHẢI -->
-                        <div class="wall-bar wall-right" id="wallRightBar"></div>
-
-                        <!-- DOCK TRƯỚC -->
-                        <div class="sensor-dock dock-top">
-                            <span class="dock-badge" style="margin: 0;">TRƯỚC:</span>
-                            <span class="dock-val" id="distFront" style="font-size: 16px;">110</span>
-                            <span class="dock-unit" style="margin: 0;">mm</span>
-                            <span class="dock-status" id="statusWallFront">CÓ TƯỜNG</span>
-                        </div>
-
-                        <!-- THÂN ROBOT MICROMOUSE -->
-                        <div class="robot-mouse-body" id="mouseBody">
-                            <div style="font-size: 32px; filter: drop-shadow(0 0 8px rgba(0,242,254,0.5));">🐭</div>
-                            <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--primary-cyan); margin-top: 4px;">MICROMOUSE</div>
-                            <div class="cell-dev-pill" id="cellDevPill">Lệch tâm: 0.0 mm</div>
-                        </div>
-                    </div>
-
-                    <!-- DOCK PHẢI -->
-                    <div class="sensor-dock">
-                        <div class="dock-badge">PHẢI (RIGHT)</div>
-                        <div class="dock-val" id="distRight">152</div>
-                        <div class="dock-unit">mm</div>
-                        <div class="dock-status" id="statusWallRight">CÓ TƯỜNG</div>
-                    </div>
-                </div>
-
-                <!-- 3 BẢNG THÔNG SỐ CHI TIẾT CẢM BIẾN -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 20px;">
-                    <!-- SENSOR TRÁI -->
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,242,254,0.25); border-radius: 12px; padding: 14px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span style="font-size: 12px; font-weight: 700; color: var(--primary-cyan);">⬅️ Cảm Biến Trái</span>
-                            <span style="font-size: 11px; color: var(--text-muted);">Chuẩn: 161 mm</span>
-                        </div>
-                        <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px;">
-                            <div id="distLeftBar" style="height: 100%; width: 53%; background: linear-gradient(90deg, #0077ff, var(--primary-cyan)); transition: width 0.15s ease;"></div>
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ngưỡng nhận tường: &lt; 230 mm</div>
-                    </div>
-
-                    <!-- SENSOR TRƯỚC -->
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,198,255,0.25); border-radius: 12px; padding: 14px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span style="font-size: 12px; font-weight: 700; color: #00c6ff;">⬆️ Cảm Biến Trước</span>
-                            <span style="font-size: 11px; color: var(--text-muted);">Chuẩn: 110 mm</span>
-                        </div>
-                        <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px;">
-                            <div id="distFrontBar" style="height: 100%; width: 44%; background: linear-gradient(90deg, #00c6ff, #0072ff); transition: width 0.15s ease;"></div>
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Phanh dừng khẩn cấp: &le; 65 mm</div>
-                    </div>
-
-                    <!-- SENSOR PHẢI -->
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(217,70,239,0.25); border-radius: 12px; padding: 14px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span style="font-size: 12px; font-weight: 700; color: #d946ef;">➡️ Cảm Biến Phải</span>
-                            <span style="font-size: 11px; color: var(--text-muted);">Chuẩn: 152 mm</span>
-                        </div>
-                        <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px;">
-                            <div id="distRightBar" style="height: 100%; width: 50%; background: linear-gradient(90deg, #7928ca, #d946ef); transition: width 0.15s ease;"></div>
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ngưỡng nhận tường: &lt; 230 mm</div>
-                    </div>
-                </div>
-
-                <!-- THÔNG SỐ ĐÃ NẠP & NÚT GÁN LIVE CHUẨN TÂM -->
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; margin-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 13px; color: #fff;">🎯 Hiệu Chuẩn Tâm Ô Tự Động (One-Click Calibration)</div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                                Đặt robot vào chính giữa ô mê cung và nhấn nút bên phải để robot tự lưu cự ly này làm mốc chuẩn cân bằng!
-                            </div>
-                        </div>
-                        <button class="btn-step" style="width: auto; padding: 8px 16px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, rgba(0,242,254,0.2), rgba(0,119,255,0.3)); border: 1px solid var(--primary-cyan); color: #fff;" onclick="calibrateCenterCurrent()">
-                            📌 Đặt Vị Trí Hiện Tại Làm Tâm Ô
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ĐIỀU KHIỂN NHANH PID TẠI TAB 3 -->
-                <div style="display: flex; gap: 14px; margin-top: 20px;">
-                    <button class="btn-pid-run" style="flex: 1;" onclick="sendCmd('PID_ON')">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+                    <button class="btn-pid-run" style="grid-column: span 1; padding: 14px;" onclick="sendCmd('PID_ON')">
                         🚀 KÍCH HOẠT PID BÁM TƯỜNG
                     </button>
-                    <button class="btn-brake" style="flex: 1;" onclick="sendCmd('PID_OFF')">
+                    <button class="btn-brake" style="grid-column: span 1; padding: 14px;" onclick="sendCmd('PID_OFF')">
                         🛑 DỪNG DỪNG XE (PID OFF)
                     </button>
+                    <button class="btn-turn-left" onclick="sendCmd('TL')">
+                        <span>◀</span> QUAY THỬ RẼ TRÁI 90°
+                    </button>
+                    <button class="btn-turn-right" onclick="sendCmd('TR')">
+                        QUAY THỬ RẼ PHẢI 90° <span>▶</span>
+                    </button>
+                    <button class="btn-step" style="padding: 12px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, rgba(0,242,254,0.2), rgba(0,119,255,0.3)); border: 1px solid var(--primary-cyan); color: #fff;" onclick="calibrateCenterCurrent()">
+                        📌 Gán Chuẩn Tâm Ô Này
+                    </button>
+                    <button class="btn-step" style="padding: 12px; font-size: 13px; font-weight: 700; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #fff;" onclick="sendCmd('RST_ENC')">
+                        🔄 Reset Xung Encoder
+                    </button>
+                </div>
+            </div>
+
+            <!-- PHẦN 3: BẢNG CĂN CHỈNH THÔNG SỐ LIVE (TUNING PARAMETERS) -->
+            <div class="grid-2col">
+                <!-- CỘT 1: TÂM Ô, TỐC ĐỘ & BÙ QUÁN TÍNH -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🎯 Căn Chỉnh Tâm Ô & Tốc Độ & Bù Rẽ</div>
+                    </div>
+
+                    <!-- DEADBAND -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">🛡️ Vùng Chết Khử Nhiễu Tâm (Deadband):</div>
+                            <div class="param-value-badge" id="valBadgeDB">3.0 mm</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('db', -0.5)">-</button>
+                            <input type="range" class="slider-input" id="sliderDB" min="0.0" max="20.0" step="0.5" value="3.0" oninput="updateBadge('DB', this.value)" onchange="applyParam('DB')">
+                            <button class="btn-step" onclick="stepParam('db', 0.5)">+</button>
+                            <button class="btn-apply" onclick="applyParam('DB')">Gửi</button>
+                        </div>
+                    </div>
+
+                    <!-- BASE SPEED -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">⚡ Tốc Độ Chạy Thẳng (Base Speed):</div>
+                            <div class="param-value-badge" id="valBadgeFSPD">75</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('fspd', -5)">-</button>
+                            <input type="range" class="slider-input" id="sliderFSPD" min="40" max="255" step="5" value="75" oninput="updateBadge('FSPD', this.value)" onchange="applyParam('FSPD')">
+                            <button class="btn-step" onclick="stepParam('fspd', 5)">+</button>
+                            <button class="btn-apply" onclick="applyParam('FSPD')">Gửi</button>
+                        </div>
+                    </div>
+
+                    <!-- TURN SPEED -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">🔄 Tốc Độ Quay Góc Rẽ (Turn Speed):</div>
+                            <div class="param-value-badge" id="valBadgeSPD">80</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('spd', -5)">-</button>
+                            <input type="range" class="slider-input" id="sliderSPD" min="40" max="255" step="5" value="80" oninput="updateBadge('SPD', this.value)" onchange="applyParam('SPD')">
+                            <button class="btn-step" onclick="stepParam('spd', 5)">+</button>
+                            <button class="btn-apply" onclick="applyParam('SPD')">Gửi</button>
+                        </div>
+                    </div>
+
+                    <!-- LEFT COMPENSATION -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">📐 Bù Rẽ Trái (Left Compensation):</div>
+                            <div class="param-value-badge" id="valBadgeLC">18.0°</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('lc', -0.5)">-</button>
+                            <input type="range" class="slider-input" id="sliderLC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('LC', this.value)" onchange="applyParam('LC')">
+                            <button class="btn-step" onclick="stepParam('lc', 0.5)">+</button>
+                            <button class="btn-apply" onclick="applyParam('LC')">Gửi</button>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COMPENSATION -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">📐 Bù Rẽ Phải (Right Compensation):</div>
+                            <div class="param-value-badge" id="valBadgeRC">18.0°</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('rc', -0.5)">-</button>
+                            <input type="range" class="slider-input" id="sliderRC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('RC', this.value)" onchange="applyParam('RC')">
+                            <button class="btn-step" onclick="stepParam('rc', 0.5)">+</button>
+                            <button class="btn-apply" onclick="applyParam('RC')">Gửi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CỘT 2: BỘ THÔNG SỐ PID BÁM TƯỜNG -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🎛️ Bộ Tham Số PID Bám Tường</div>
+                    </div>
+
+                    <!-- PID Kp -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">Kp (Hệ Số Tỉ Lệ - Bẻ Lái Nhanh/Chậm):</div>
+                            <div class="param-value-badge" id="valBadgeKP">1.00</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('kp', -0.05)">-</button>
+                            <input type="range" class="slider-input" id="sliderKP" min="0.0" max="3.0" step="0.05" value="1.00" oninput="updateBadge('KP', this.value)" onchange="applyParam('KP')">
+                            <button class="btn-step" onclick="stepParam('kp', 0.05)">+</button>
+                            <button class="btn-apply" onclick="applyParam('KP')">Gửi</button>
+                        </div>
+                    </div>
+
+                    <!-- PID Ki -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">Ki (Hệ Số Tích Phân):</div>
+                            <div class="param-value-badge" id="valBadgeKI">0.000</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('ki', -0.001)">-</button>
+                            <input type="range" class="slider-input" id="sliderKI" min="0.000" max="0.050" step="0.001" value="0.000" oninput="updateBadge('KI', this.value)" onchange="applyParam('KI')">
+                            <button class="btn-step" onclick="stepParam('ki', 0.001)">+</button>
+                            <button class="btn-apply" onclick="applyParam('KI')">Gửi</button>
+                        </div>
+                    </div>
+
+                    <!-- PID Kd -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">Kd (Hệ Số Vi Phân - Chống Lắc Lư):</div>
+                            <div class="param-value-badge" id="valBadgeKD">0.08</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepParam('kd', -0.01)">-</button>
+                            <input type="range" class="slider-input" id="sliderKD" min="0.00" max="2.00" step="0.01" value="0.08" oninput="updateBadge('KD', this.value)" onchange="applyParam('KD')">
+                            <button class="btn-step" onclick="stepParam('kd', 0.01)">+</button>
+                            <button class="btn-apply" onclick="applyParam('KD')">Gửi</button>
+                        </div>
+                    </div>
+
+                    <!-- QUICK INFO BOX -->
+                    <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-top: 18px;">
+                        <div style="font-weight: 700; font-size: 12px; color: var(--primary-cyan); margin-bottom: 4px;">💡 Hướng dẫn nhanh căn chỉnh:</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                            • Đặt xe giữa ô, nếu thấy <b>Lệch tâm: 0.0 mm (Chuẩn tâm)</b> thì deadband đã hoạt động tốt.<br>
+                            • Bấm <b>🚀 KÍCH HOẠT PID</b> để xe tự bám tường thẳng.<br>
+                            • Nếu xe bị đảo lắc tay lái, giảm nhẹ Kp hoặc tăng Deadband lên 6-7mm.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 4: TERMINAL CONSOLE -->
-        <div class="tab-panel" id="tab4">
+        <!-- TAB 2: TERMINAL CONSOLE -->
+        <div class="tab-panel" id="tab2">
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">🖥️ Nhật Ký BLE Terminal (Real-time)</div>
@@ -1133,7 +1123,7 @@
                     <div class="terminal-line sys">[SYSTEM] Sẵn sàng kết nối Bluetooth LE...</div>
                 </div>
                 <div class="terminal-input-group">
-                    <input type="text" class="terminal-input" id="cmdInput" placeholder="Nhập lệnh (vd: PID_ON, PID_OFF, SET_KP=1.5, STATUS)..." onkeydown="if(event.key==='Enter') sendCustomCmd()">
+                    <input type="text" class="terminal-input" id="cmdInput" placeholder="Nhập lệnh (vd: PID_ON, PID_OFF, SET_KP=0.2, SET_DB=5.0, STATUS)..." onkeydown="if(event.key==='Enter') sendCustomCmd()">
                     <button class="btn-apply" style="padding: 10px 20px;" onclick="sendCustomCmd()">GỬI LỆNH</button>
                 </div>
             </div>
@@ -1218,7 +1208,10 @@
             }
         }
 
+        let bleRxBuffer = "";
+
         function onDisconnected() {
+            bleRxBuffer = "";
             updateConnectUI(false);
             log("Đã ngắt kết nối Bluetooth!", "error");
         }
@@ -1293,23 +1286,42 @@
         function handleBLEData(event) {
             const value = event.target.value;
             const decoder = new TextDecoder('utf-8');
-            const str = decoder.decode(value).trim();
-            if (!str) return;
+            const chunk = decoder.decode(value);
+            if (!chunk) return;
 
-            const lines = str.split('\n');
-            lines.forEach(line => {
-                line = line.trim();
-                if (!line) return;
+            // Tích lũy chunk vào buffer để ghép các gói tin bị phân mảnh qua BLE
+            bleRxBuffer += chunk;
+            if (bleRxBuffer.length > 8192) {
+                bleRxBuffer = bleRxBuffer.slice(-4096);
+            }
 
-                log(line);
+            let newlineIdx;
+            while ((newlineIdx = bleRxBuffer.indexOf('\n')) !== -1) {
+                let line = bleRxBuffer.slice(0, newlineIdx).trim();
+                bleRxBuffer = bleRxBuffer.slice(newlineIdx + 1);
 
-                if (line.startsWith('{') && line.endsWith('}')) {
+                if (!line) continue;
+
+                // Kiểm tra và bóc tách gói tin JSON
+                const jsonStart = line.indexOf('{');
+                const jsonEnd = line.lastIndexOf('}');
+                if (jsonStart !== -1 && jsonEnd > jsonStart) {
                     try {
-                        const data = JSON.parse(line);
+                        const jsonStr = line.substring(jsonStart, jsonEnd + 1);
+                        const data = JSON.parse(jsonStr);
                         parseJSONPacket(data);
-                    } catch (e) {}
+                        // Bỏ qua gói telemetry định kỳ, không in ra màn hình Terminal để tránh ngập log
+                        if (data.type === "telemetry") {
+                            continue;
+                        }
+                    } catch (e) {
+                        console.warn("Lỗi parse JSON:", e, line);
+                    }
                 }
-            });
+
+                // In các log văn bản hoặc phản hồi lệnh từ Robot ra Terminal
+                log(line);
+            }
         }
 
         let currentDL = 161;
@@ -1398,28 +1410,51 @@
                     if (distRBar) distRBar.style.width = Math.min(100, Math.max(0, (data.r / 300) * 100)) + '%';
                 }
 
-                // Độ lệch tâm ô thực tế
+                // Độ lệch tâm ô thực tế (Có lọc Deadband)
                 if (data.l !== undefined && data.r !== undefined) {
                     const tld = data.tld !== undefined ? data.tld : 161.0;
                     const trd = data.trd !== undefined ? data.trd : 152.0;
-                    const dev = (data.l - tld) - (data.r - trd);
+                    const db = data.db !== undefined ? data.db : 5.0;
+
+                    // Ưu tiên dùng sai số err đã lọc và áp dụng deadband từ Robot
+                    let dev = 0.0;
+                    if (data.err !== undefined) {
+                        dev = data.err;
+                    } else {
+                        const rawDev = (data.l - tld) - (data.r - trd);
+                        if (Math.abs(rawDev) <= db) {
+                            dev = 0.0;
+                        } else {
+                            dev = rawDev > 0 ? (rawDev - db) : (rawDev + db);
+                        }
+                    }
+
                     const pill = document.getElementById('cellDevPill');
                     if (pill) {
-                        const devRound = dev.toFixed(1);
-                        pill.textContent = `Lệch tâm: ${dev >= 0 ? '+' : ''}${devRound} mm`;
-                        if (Math.abs(dev) <= 6) {
-                            pill.style.background = 'rgba(16, 185, 129, 0.2)';
+                        if (Math.abs(dev) < 0.1) {
+                            pill.textContent = `Lệch tâm: 0.0 mm (Chuẩn tâm)`;
+                            pill.style.background = 'rgba(16, 185, 129, 0.25)';
                             pill.style.color = 'var(--success-green)';
-                        } else if (Math.abs(dev) <= 15) {
-                            pill.style.background = 'rgba(245, 158, 11, 0.2)';
-                            pill.style.color = 'var(--warning-amber)';
+                            pill.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.4)';
                         } else {
-                            pill.style.background = 'rgba(239, 68, 68, 0.2)';
-                            pill.style.color = 'var(--danger-red)';
+                            const devRound = dev.toFixed(1);
+                            pill.textContent = `Lệch tâm: ${dev >= 0 ? '+' : ''}${devRound} mm`;
+                            pill.style.boxShadow = 'none';
+                            if (Math.abs(dev) <= 6) {
+                                pill.style.background = 'rgba(16, 185, 129, 0.2)';
+                                pill.style.color = 'var(--success-green)';
+                            } else if (Math.abs(dev) <= 15) {
+                                pill.style.background = 'rgba(245, 158, 11, 0.2)';
+                                pill.style.color = 'var(--warning-amber)';
+                            } else {
+                                pill.style.background = 'rgba(239, 68, 68, 0.2)';
+                                pill.style.color = 'var(--danger-red)';
+                            }
                         }
                     }
                 }
 
+                if (data.db !== undefined) updateBadge('DB', data.db);
                 if (data.lc !== undefined) updateBadge('LC', data.lc);
                 if (data.rc !== undefined) updateBadge('RC', data.rc);
                 if (data.spd !== undefined) updateBadge('SPD', data.spd);
@@ -1449,6 +1484,15 @@
                     }
                 }
 
+                if (data.el !== undefined) {
+                    const encLEl = document.getElementById('valEncL');
+                    if (encLEl) encLEl.textContent = data.el;
+                }
+                if (data.er !== undefined) {
+                    const encREl = document.getElementById('valEncR');
+                    if (encREl) encREl.textContent = data.er;
+                }
+
                 if (data.fspd !== undefined) updateBadge('FSPD', data.fspd);
             }
             else if (data.type === "turn_res") {
@@ -1474,6 +1518,7 @@
             if (type === 'SPD' || type === 'FSPD') badge.textContent = val;
             else if (type === 'KP' || type === 'KD') badge.textContent = parseFloat(val).toFixed(2);
             else if (type === 'KI') badge.textContent = parseFloat(val).toFixed(3);
+            else if (type === 'DB') badge.textContent = parseFloat(val).toFixed(1) + ' mm';
             else badge.textContent = parseFloat(val).toFixed(1) + '°';
 
             slider.value = val;

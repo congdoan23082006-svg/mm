@@ -131,6 +131,13 @@ void CommandHandler::processBLECommands() {
       robotNav.frontStopDist = (uint16_t)val;
       bleManager.println(">> [BLE] CAP NHAT FRONT_STOP_DIST = " + String(val));
     }
+  } else if (cmd.startsWith("SET_DB=")) {
+    float val = cmd.substring(7).toFloat();
+    if (val >= 0.0f && val <= 30.0f) {
+      robotNav.wallDeadband = val;
+      bleManager.println(">> [BLE] CAP NHAT WALL_DEADBAND = " +
+                         String(robotNav.wallDeadband, 1) + " mm");
+    }
   } else if (cmd == "RESET_ENC" || cmd == "RST_ENC") {
     robotNav.resetEnc();
     bleManager.println(">> [BLE] DA RESET XUNG ENCODER VE 0");
@@ -151,17 +158,9 @@ void CommandHandler::sendTelemetry() {
   if (bleManager.isConnected() && millis() - _lastTelemetryTime >= 200) {
     _lastTelemetryTime = millis();
     float yaw = robotNav.mpu6050.getYaw();
-    uint16_t dLeft = robotNav.leftReady
-                         ? robotNav.sensorLeft.readRangeContinuousMillimeters()
-                         : 0;
-    uint16_t dFront =
-        robotNav.frontReady
-            ? robotNav.sensorFront.readRangeContinuousMillimeters()
-            : 0;
-    uint16_t dRight =
-        robotNav.rightReady
-            ? robotNav.sensorRight.readRangeContinuousMillimeters()
-            : 0;
+    uint16_t dLeft = (uint16_t)robotNav.smoothDL;
+    uint16_t dFront = (uint16_t)robotNav.smoothDF;
+    uint16_t dRight = (uint16_t)robotNav.smoothDR;
     long encL = robotNav.getLeftEncoder();
     long encR = robotNav.getRightEncoder();
 
@@ -169,6 +168,8 @@ void CommandHandler::sendTelemetry() {
         "{\"type\":\"telemetry\",\"yaw\":" + String(yaw, 1) +
         ",\"l\":" + String(dLeft) + ",\"f\":" + String(dFront) +
         ",\"r\":" + String(dRight) +
+        ",\"err\":" + String(robotNav.currentWallError, 1) +
+        ",\"db\":" + String(robotNav.wallDeadband, 1) +
         ",\"el\":" + String(encL) + ",\"er\":" + String(encR) +
         ",\"lc\":" + String(robotNav.leftCompensation, 1) +
         ",\"rc\":" + String(robotNav.rightCompensation, 1) +
@@ -190,15 +191,9 @@ void CommandHandler::sendTelemetry() {
 }
 
 void CommandHandler::printStatus() {
-  uint16_t dLeft = robotNav.leftReady
-                       ? robotNav.sensorLeft.readRangeContinuousMillimeters()
-                       : 0;
-  uint16_t dFront = robotNav.frontReady
-                        ? robotNav.sensorFront.readRangeContinuousMillimeters()
-                        : 0;
-  uint16_t dRight = robotNav.rightReady
-                        ? robotNav.sensorRight.readRangeContinuousMillimeters()
-                        : 0;
+  uint16_t dLeft = (uint16_t)robotNav.smoothDL;
+  uint16_t dFront = (uint16_t)robotNav.smoothDF;
+  uint16_t dRight = (uint16_t)robotNav.smoothDR;
 
   robotNav.mpu6050.update();
   float yaw = robotNav.mpu6050.getYaw();
@@ -207,6 +202,8 @@ void CommandHandler::printStatus() {
   statusMsg += "Yaw: " + String(yaw, 2) + " deg\n";
   statusMsg += "TOF (L/F/R): " + String(dLeft) + " / " + String(dFront) +
                " / " + String(dRight) + " mm\n";
+  statusMsg += "DEADBAND: " + String(robotNav.wallDeadband, 1) +
+               " mm | ERROR: " + String(robotNav.currentWallError, 1) + " mm\n";
   statusMsg += "PARAMS -> LEFT_COMP: " + String(robotNav.leftCompensation, 1) +
                " | RIGHT_COMP: " + String(robotNav.rightCompensation, 1) +
                " | SPEED: " + String(robotNav.turnSpeed) + "\n";

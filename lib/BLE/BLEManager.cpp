@@ -16,6 +16,7 @@ BLEManager::BLEManager() {
 void BLEManager::begin(const char* deviceName) {
     // 1. Khởi tạo BLE Device
     BLEDevice::init(deviceName);
+    BLEDevice::setMTU(517);
 
     // 2. Tạo BLE Server
     _pServer = BLEDevice::createServer();
@@ -29,7 +30,6 @@ void BLEManager::begin(const char* deviceName) {
                             CHARACTERISTIC_UUID_TX,
                             BLECharacteristic::PROPERTY_NOTIFY
                           );
-    _pTxCharacteristic->addDescriptor(new BLE2902());
 
     // 5. Tạo RX Characteristic (Dùng nhận lệnh từ App)
     _pRxCharacteristic = pService->createCharacteristic(

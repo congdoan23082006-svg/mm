@@ -4,9 +4,8 @@ RobotNav robotNav;
 
 RobotNav::RobotNav()
     : mpu6050(MPU6050_ADDR),
-      wallPID(0.18f, 0.0f, 0.0f, -20.0f,
-              20.0f), // Kp 0.18, ép Kd = 0.0 triệt tiêu sốc bẻ lái ToF, kẹp output [-20, 20]
-      gyroPID(0.6f, 0.0f, 0.0f, -60.0f, 60.0f) {
+      wallPID(1.0f, 0.0f, 0.08f, -35.0f, 35.0f),
+      gyroPID(1.2f, 0.0f, 0.05f, -40.0f, 40.0f) {
   leftReady = false;
   frontReady = false;
   rightReady = false;
@@ -29,6 +28,14 @@ RobotNav::RobotNav()
   centerOffset = 21.0f; // 170.0f - 149.0f = 21.0f
   wallThreshold = 230; // Khoảng cách < 230mm là có tường, > 230mm là cửa trống
   frontStopDist = 100; // Phanh dừng khi cách tường trước <= 100mm
+
+  // Giá trị cảm biến lọc & Vùng chết tâm ô
+  smoothDL = 170.0f;
+  smoothDF = 110.0f;
+  smoothDR = 149.0f;
+  currentWallError = 0.0f;
+  wallDeadband = 3.0f; // Vùng chết 3mm khử nhiễu dao động ở tâm ô mà không làm trễ phản xạ bẻ lái
+  _lastSensorReadTime = 0;
 
   // Cấu hình đồng bộ bánh bằng Encoder (Cascaded Inner Loop)
   encoderSyncActive = true;
@@ -105,7 +112,7 @@ bool RobotNav::initVL53(VL53L0X &sensor, uint8_t xshutPin, uint8_t address,
                         const char *name) {
   digitalWrite(xshutPin, HIGH);
   delay(50);
-  sensor.setTimeout(500);
+  sensor.setTimeout(50);
 
   if (!sensor.init()) {
     Serial.print(name);
@@ -220,6 +227,88 @@ void RobotNav::stopPID() {
   stopMotors();
 }
 
+void RobotNav::updateSensors() {
+  unsigned long now = millis();
+  // Giới hạn chu kỳ đọc cảm biến khoảng 35ms một lần (tương thích timing budget 33ms của VL53L0X)
+  if (now - _lastSensorReadTime < 35) {
+    return;
+  }
+  _lastSensorReadTime = now;
+
+  uint16_t raw_dL = 999;
+  if (leftReady) {
+    raw_dL = sensorLeft.readRangeContinuousMillimeters();
+    if (sensorLeft.timeoutOccurred() || raw_dL > 1200 || raw_dL < 15) {
+      raw_dL = 999;
+    }
+  }
+
+  uint16_t raw_dF = 999;
+  if (frontReady) {
+    raw_dF = sensorFront.readRangeContinuousMillimeters();
+    if (sensorFront.timeoutOccurred() || raw_dF > 1200 || raw_dF < 15) {
+      raw_dF = 999;
+    }
+  }
+
+  uint16_t raw_dR = 999;
+  if (rightReady) {
+    raw_dR = sensorRight.readRangeContinuousMillimeters();
+    if (sensorRight.timeoutOccurred() || raw_dR > 1200 || raw_dR < 15) {
+      raw_dR = 999;
+    }
+  }
+
+  // Lọc EMA cho cảm biến trái
+  if (raw_dL < 800) {
+    smoothDL = (0.4f * (float)raw_dL) + (0.6f * smoothDL);
+  } else {
+    smoothDL = (0.2f * 999.0f) + (0.8f * smoothDL);
+  }
+
+  // Lọc EMA cho cảm biến phải
+  if (raw_dR < 800) {
+    smoothDR = (0.4f * (float)raw_dR) + (0.6f * smoothDR);
+  } else {
+    smoothDR = (0.2f * 999.0f) + (0.8f * smoothDR);
+  }
+
+  // Lọc EMA cho cảm biến trước (phản ứng nhanh để dừng kịp thời)
+  if (raw_dF < 800) {
+    smoothDF = (0.6f * (float)raw_dF) + (0.4f * smoothDF);
+  } else {
+    smoothDF = (float)raw_dF;
+  }
+
+  // Nhận diện tường bên
+  bool hasLeftWall = (leftReady && smoothDL > 20.0f && smoothDL < (float)wallThreshold);
+  bool hasRightWall = (rightReady && smoothDR > 20.0f && smoothDR < (float)wallThreshold);
+
+  float raw_wall_error = 0.0f;
+  if (hasLeftWall && hasRightWall) {
+    // Có cả 2 tường: tính độ lệch tâm (nhân 0.5f để độ nhạy đồng nhất với khi chỉ có 1 tường)
+    raw_wall_error = 0.5f * ((smoothDL - smoothDR) - centerOffset);
+  } else if (hasLeftWall) {
+    // Chỉ có tường trái
+    raw_wall_error = smoothDL - targetLeftDist;
+  } else if (hasRightWall) {
+    // Chỉ có tường phải
+    raw_wall_error = targetRightDist - smoothDR;
+  } else {
+    // Không có tường
+    raw_wall_error = 0.0f;
+  }
+
+  // Áp dụng Soft Deadband (Vùng chết mượt khử hoàn toàn nhiễu dao động ở tâm ô):
+  if (fabs(raw_wall_error) <= wallDeadband) {
+    currentWallError = 0.0f;
+  } else if (raw_wall_error > wallDeadband) {
+    currentWallError = raw_wall_error - wallDeadband;
+  } else {
+    currentWallError = raw_wall_error + wallDeadband;
+  }
+}
+
 void RobotNav::updatePIDLoop() {
   if (!pidRunActive)
     return;
@@ -230,33 +319,11 @@ void RobotNav::updatePIDLoop() {
     dt = 0.01f;
   _lastPIDLoopTime = now;
 
-  // Đọc raw data
-  uint16_t raw_dL = leftReady ? sensorLeft.readRangeContinuousMillimeters() : 999;
-  uint16_t raw_dF = frontReady ? sensorFront.readRangeContinuousMillimeters() : 999;
-  uint16_t raw_dR = rightReady ? sensorRight.readRangeContinuousMillimeters() : 999;
+  uint16_t dL = (uint16_t)smoothDL;
+  uint16_t dR = (uint16_t)smoothDR;
+  uint16_t dF = (uint16_t)smoothDF;
 
-  // Khởi tạo bộ lọc EMA (Exponential Moving Average)
-  static float smooth_dL = targetLeftDist;
-  static float smooth_dR = targetRightDist;
-  
-  if (raw_dL < 800) {
-    smooth_dL = (0.4f * raw_dL) + (0.6f * smooth_dL);
-  } else {
-    smooth_dL = (0.15f * 999.0f) + (0.85f * smooth_dL); // Chuyển tiếp mượt khi mất tường/lóa, không giật vọt
-  }
-
-  if (raw_dR < 800) {
-    smooth_dR = (0.4f * raw_dR) + (0.6f * smooth_dR);
-  } else {
-    smooth_dR = (0.15f * 999.0f) + (0.85f * smooth_dR);
-  }
-
-  uint16_t dL = (uint16_t)smooth_dL;
-  uint16_t dR = (uint16_t)smooth_dR;
-  uint16_t dF = raw_dF; // Phía trước cần phản ứng nhanh để phanh, không nên lọc
-
-  // 1. Phanh dừng an toàn khi gặp vách tường trước (ở tâm là 110mm, tới <= 65mm
-  // thì dừng)
+  // 1. Phanh dừng an toàn khi gặp vách tường trước
   if (frontReady && dF > 20 && dF <= frontStopDist) {
     stopMotors();
     pidRunActive = false;
@@ -278,50 +345,37 @@ void RobotNav::updatePIDLoop() {
   _lastEncLeft = curL;
   _lastEncRight = curR;
 
-  // Sai số Encoder: nếu bánh trái quay nhiều hơn bánh phải (đầu xe lệch phải) -> enc_error > 0
+  // Sai số xung Encoder: bánh trái quay nhiều hơn bánh phải -> enc_error > 0
   float enc_error = (float)(deltaL - deltaR);
 
-  // 2. Tính Sai số Thô (Raw Error) theo từng trường hợp tường (Hybrid Error)
-  float raw_error = 0.0f;
-  const float ENC_WEIGHT = 0.35f; // Trọng số kìm quán tính của Encoder
+  float pidOut = 0.0f;
 
-  if (hasLeftWall && hasRightWall) {
-    // Trường hợp 1: Có cả 2 tường (Cân bằng tâm ô + Giữ thẳng bằng Encoder)
-    float wall_error = ((float)dL - (float)dR) - centerOffset;
-    raw_error = (0.7f * wall_error) + (ENC_WEIGHT * enc_error);
-
-  } else if (hasLeftWall) {
-    // Trường hợp 2: Chỉ có tường trái (Bám tường trái + Giữ quỹ đạo bằng Encoder)
-    float wall_error = ((float)dL - targetLeftDist);
-    raw_error = (0.7f * wall_error) + (ENC_WEIGHT * enc_error);
-
-  } else if (hasRightWall) {
-    // Trường hợp 3: Chỉ có tường phải (Bám tường phải + Giữ quỹ đạo bằng Encoder)
-    float wall_error = (targetRightDist - (float)dR);
-    raw_error = (0.7f * wall_error) + (ENC_WEIGHT * enc_error);
-
+  if (hasLeftWall || hasRightWall) {
+    // 2. KHI CÓ TƯỜNG: Bám tường là ưu tiên cao nhất!
+    // Tuyệt đối KHÔNG cộng enc_error vào vì chênh lệch xung giữa 2 bánh khi bẻ lái
+    // sẽ chống lại lực bẻ lái của xe!
+    if (mpuReady) {
+      _targetYaw = mpu6050.getYaw(); // Cập nhật hướng góc để khi mất tường sẵn sàng giữ hướng thẳng
+    }
+    // Giới hạn sai số tường tối đa [-35, 35] mm để chống sốc khi qua ngã rẽ
+    float boundedWallError = constrain(currentWallError, -35.0f, 35.0f);
+    pidOut = wallPID.computeError(boundedWallError, dt);
   } else {
-    // Trường hợp 4: Không có tường (Ngã tư) -> Phối hợp Encoder & Gyro giữ thẳng tuyệt đối
-    mpu6050.update();
-    float gyro_error = _targetYaw - mpu6050.getYaw();
-    raw_error = (0.6f * gyro_error) + (0.4f * enc_error);
+    // 3. KHI KHÔNG CÓ TƯỜNG (Ngã tư / Cửa trống): Giữ thẳng tuyệt đối bằng Gyro + Encoder
+    float gyro_error = 0.0f;
+    if (mpuReady) {
+      gyro_error = _targetYaw - mpu6050.getYaw();
+    }
+    float straightError = gyro_error + (0.05f * enc_error);
+    pidOut = gyroPID.computeError(straightError, dt);
   }
 
-  // 3. Lọc mượt sai số qua Low-Pass Filter (chống gai nhọn khe nứt tường)
-  const float ALPHA = 0.3f; // 30% giá trị mới, 70% giữ quán tính mượt mà
-  _smoothError = (ALPHA * raw_error) + ((1.0f - ALPHA) * _smoothError);
-
-  // 4. Kẹp trần sai số tối đa và tính tín hiệu điều khiển PID
-  const float MAX_WALL_ERROR = 20.0f;
-  float final_error = constrain(_smoothError, -MAX_WALL_ERROR, MAX_WALL_ERROR);
-  float pidOut = wallPID.computeError(final_error, dt);
-
-  // 5. Xuất PWM cho 2 bánh
+  // 4. Xuất PWM cho 2 bánh
   int leftSpeed = baseForwardSpeed - (int)pidOut;
   int rightSpeed = baseForwardSpeed + (int)pidOut;
 
-  leftSpeed = constrain(leftSpeed, 50, 255);
-  rightSpeed = constrain(rightSpeed, 50, 255);
+  leftSpeed = constrain(leftSpeed, 40, 255);
+  rightSpeed = constrain(rightSpeed, 40, 255);
 
   currentLeftSpeed = leftSpeed;
   currentRightSpeed = rightSpeed;
@@ -333,6 +387,8 @@ void RobotNav::updatePIDLoop() {
 }
 
 void RobotNav::update() {
+  updateSensors();
+
   if (pidRunActive) {
     updatePIDLoop();
   }

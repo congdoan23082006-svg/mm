@@ -69,9 +69,19 @@ public:
   bool rightReady;
   bool mpuReady;
 
+  // Dữ liệu cảm biến sau lọc & Vùng chết tâm ô
+  float smoothDL;
+  float smoothDF;
+  float smoothDR;
+  float currentWallError;
+  float wallDeadband; // Vùng chết khử nhiễu tâm ô (mm)
+
+  void updateSensors();
+
 private:
   float _targetYaw;
   unsigned long _lastPIDLoopTime;
+  unsigned long _lastSensorReadTime;
   long _lastEncLeft;
   long _lastEncRight;
   long _startEncLeft;
