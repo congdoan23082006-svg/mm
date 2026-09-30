@@ -398,36 +398,172 @@
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--card-border);
             color: var(--text-main);
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
+            min-width: 34px;
+            height: 30px;
+            padding: 0 8px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 700;
-            display: flex;
+            font-size: 12px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .btn-step:hover {
             background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .btn-apply {
             background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(0, 119, 255, 0.3));
             border: 1px solid var(--primary-cyan);
             color: var(--primary-cyan);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .btn-apply:hover {
             background: var(--primary-cyan);
             color: #000;
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
+        }
+
+        /* HỆ THỐNG NÚT BẤM NGUYÊN TỬ TAB 2 (ATOMIC BUTTONS) */
+        .btn-atomic {
+            width: 100%;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            text-align: center;
+            box-sizing: border-box;
+            user-select: none;
+            line-height: 1.3;
+        }
+
+        .btn-atomic:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.15);
+        }
+
+        .btn-atomic:active {
+            transform: translateY(0);
+        }
+
+        .btn-atomic-main {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(0, 242, 254, 0.4));
+            border-color: var(--success-green);
+            color: #fff;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-weight: 800;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+            letter-spacing: 0.5px;
+        }
+
+        .btn-atomic-main:hover {
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-atomic-turn-left {
+            background: linear-gradient(135deg, rgba(0, 198, 255, 0.22), rgba(0, 114, 255, 0.28));
+            border-color: rgba(0, 242, 254, 0.6);
+            color: #fff;
+            padding: 13px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.15);
+        }
+
+        .btn-atomic-turn-right {
+            background: linear-gradient(135deg, rgba(121, 40, 202, 0.25), rgba(217, 70, 239, 0.28));
+            border-color: rgba(217, 70, 239, 0.6);
+            color: #fff;
+            padding: 13px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(217, 70, 239, 0.15);
+        }
+
+        .btn-atomic-turn-around {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.25));
+            border-color: rgba(245, 158, 11, 0.6);
+            color: #fff;
+            padding: 13px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+        }
+
+        .btn-atomic-sense {
+            background: rgba(0, 242, 254, 0.12);
+            border-color: rgba(0, 242, 254, 0.35);
+            color: var(--primary-cyan);
+            padding: 13px 14px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .btn-atomic-sense:hover {
+            background: rgba(0, 242, 254, 0.22);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+        }
+
+        .btn-atomic-stop {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: #ef4444;
+            color: #fff;
+            padding: 11px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-atomic-stop:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-atomic-util {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--card-border);
+            color: var(--text-main);
+            padding: 11px 14px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .btn-atomic-util:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #fff;
+        }
+
+        .btn-atomic-calib {
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.35);
+            color: var(--warning-amber);
+            padding: 12px 14px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .btn-atomic-calib:hover {
+            background: rgba(245, 158, 11, 0.22);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
         }
 
         /* ACTION BUTTONS */
@@ -952,7 +1088,7 @@
                     <span style="font-size: 12px; color: var(--text-muted);">Điều khiển tức thời qua Bluetooth</span>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
-                    <button class="btn-step" style="padding: 14px; font-size: 14px; font-weight: 800; background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(0,242,254,0.3)); border: 1px solid var(--success-green); color: #fff;" onclick="switchTab(2)">
+                    <button class="btn-atomic" style="padding: 14px; font-size: 14px; font-weight: 800; background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(0,242,254,0.3)); border: 1px solid var(--success-green); color: #fff;" onclick="switchTab(2)">
                         🏁 CHUYỂN SANG CHẾ ĐỘ 2: ĐI 1 Ô ➔
                     </button>
                     <button class="btn-pid-run" style="padding: 14px;" onclick="sendCmd('PID_ON')">
@@ -967,10 +1103,10 @@
                     <button class="btn-turn-right" onclick="sendCmd('TR')">
                         QUAY THỬ RẼ PHẢI 90° <span>▶</span>
                     </button>
-                    <button class="btn-step" style="padding: 12px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, rgba(0,242,254,0.2), rgba(0,119,255,0.3)); border: 1px solid var(--primary-cyan); color: #fff;" onclick="calibrateCenterCurrent()">
+                    <button class="btn-atomic btn-atomic-sense" style="padding: 12px; font-size: 13px;" onclick="calibrateCenterCurrent()">
                         📌 Gán Chuẩn Tâm Ô Này
                     </button>
-                    <button class="btn-step" style="padding: 12px; font-size: 13px; font-weight: 700; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #fff;" onclick="sendCmd('RST_ENC')">
+                    <button class="btn-atomic btn-atomic-util" style="padding: 12px; font-size: 13px;" onclick="sendCmd('RST_ENC')">
                         🔄 Reset Xung Encoder
                     </button>
                 </div>
@@ -1016,11 +1152,11 @@
                     <div class="param-group">
                         <div class="param-header">
                             <div class="param-title">🔄 Tốc Độ Quay Góc Rẽ (Turn Speed):</div>
-                            <div class="param-value-badge" id="valBadgeSPD">80</div>
+                            <div class="param-value-badge" id="valBadgeSPD">70</div>
                         </div>
                         <div class="slider-controls">
                             <button class="btn-step" onclick="stepParam('spd', -5)">-</button>
-                            <input type="range" class="slider-input" id="sliderSPD" min="40" max="255" step="5" value="80" oninput="updateBadge('SPD', this.value)" onchange="applyParam('SPD')">
+                            <input type="range" class="slider-input" id="sliderSPD" min="40" max="255" step="5" value="70" oninput="updateBadge('SPD', this.value)" onchange="applyParam('SPD')">
                             <button class="btn-step" onclick="stepParam('spd', 5)">+</button>
                             <button class="btn-apply" onclick="applyParam('SPD')">Gửi</button>
                         </div>
@@ -1030,11 +1166,11 @@
                     <div class="param-group">
                         <div class="param-header">
                             <div class="param-title">📐 Bù Rẽ Trái (Left Compensation):</div>
-                            <div class="param-value-badge" id="valBadgeLC">18.0°</div>
+                            <div class="param-value-badge" id="valBadgeLC">22.0°</div>
                         </div>
                         <div class="slider-controls">
                             <button class="btn-step" onclick="stepParam('lc', -0.5)">-</button>
-                            <input type="range" class="slider-input" id="sliderLC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('LC', this.value)" onchange="applyParam('LC')">
+                            <input type="range" class="slider-input" id="sliderLC" min="0" max="50" step="0.5" value="22.0" oninput="updateBadge('LC', this.value)" onchange="applyParam('LC')">
                             <button class="btn-step" onclick="stepParam('lc', 0.5)">+</button>
                             <button class="btn-apply" onclick="applyParam('LC')">Gửi</button>
                         </div>
@@ -1044,11 +1180,11 @@
                     <div class="param-group">
                         <div class="param-header">
                             <div class="param-title">📐 Bù Rẽ Phải (Right Compensation):</div>
-                            <div class="param-value-badge" id="valBadgeRC">18.0°</div>
+                            <div class="param-value-badge" id="valBadgeRC">22.0°</div>
                         </div>
                         <div class="slider-controls">
                             <button class="btn-step" onclick="stepParam('rc', -0.5)">-</button>
-                            <input type="range" class="slider-input" id="sliderRC" min="0" max="50" step="0.5" value="18.0" oninput="updateBadge('RC', this.value)" onchange="applyParam('RC')">
+                            <input type="range" class="slider-input" id="sliderRC" min="0" max="50" step="0.5" value="22.0" oninput="updateBadge('RC', this.value)" onchange="applyParam('RC')">
                             <button class="btn-step" onclick="stepParam('rc', 0.5)">+</button>
                             <button class="btn-apply" onclick="applyParam('RC')">Gửi</button>
                         </div>
@@ -1136,7 +1272,7 @@
                 <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; margin-bottom: 18px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 700; color: #fff;">Quãng Đường Đã Đi Trong 1 Ô:</span>
-                        <span id="stepProgressText" style="font-size: 15px; font-weight: 800; color: var(--primary-cyan); font-family: monospace;">0 / 1000 xung (0%)</span>
+                        <span id="stepProgressText" style="font-size: 15px; font-weight: 800; color: var(--primary-cyan); font-family: monospace;">0 / 4400 xung (0%)</span>
                     </div>
                     <div style="height: 16px; background: rgba(255,255,255,0.08); border-radius: 8px; overflow: hidden; position: relative;">
                         <div id="stepProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0077ff, var(--primary-cyan), var(--success-green)); transition: width 0.1s linear;"></div>
@@ -1157,7 +1293,7 @@
                     </div>
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 14px; text-align: center;">
                         <div style="font-size: 12px; font-weight: 700; color: var(--success-green); margin-bottom: 4px;">🎯 Xung Mục Tiêu (1 Ô)</div>
-                        <div id="tab2TargetPulses" style="font-size: 26px; font-weight: 900; font-family: monospace; color: var(--success-green);">1000</div>
+                        <div id="tab2TargetPulses" style="font-size: 26px; font-weight: 900; font-family: monospace; color: var(--success-green);">4400</div>
                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">chuẩn 1 ô (180 mm)</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; text-align: center;">
@@ -1170,64 +1306,91 @@
 
             <!-- PHẦN 2: THAO TÁC & CÀI ĐẶT SỐ XUNG 1 Ô -->
             <div class="grid-2col">
-                <!-- CỘT 1: THAO TÁC CHẠY 1 Ô -->
-                <div class="card" style="padding: 22px;">
-                    <div class="card-header">
-                        <div class="card-title">🚀 Thao Tác Chạy 1 Ô</div>
+                <!-- CỘT 1: THAO TÁC CHẠY TỪNG Ô NGUYÊN TỬ (BƯỚC 3) -->
+                <div class="card" style="padding: 24px;">
+                    <div class="card-header" style="margin-bottom: 20px;">
+                        <div class="card-title">🚀 Lệnh Chuyển Động Từng Ô (Bước 3)</div>
+                        <span style="font-size: 12px; color: var(--primary-cyan); font-weight: 700; background: rgba(0, 242, 254, 0.12); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(0, 242, 254, 0.3);">Atomic Step Engine</span>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 14px;">
-                        <button class="btn-step" style="padding: 16px; font-size: 16px; font-weight: 900; background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(0,242,254,0.35)); border: 2px solid var(--success-green); color: #fff; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 20px rgba(16,185,129,0.3);" onclick="startStepOneCell()">
-                            🏁 BẮT ĐẦU CHẠY ĐÚNG 1 Ô (START)
+
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- NÚT TIẾN 1 Ô LỚN -->
+                        <button class="btn-atomic btn-atomic-main" onclick="startStepOneCell()">
+                            <span style="font-size: 18px;">⬆️</span> TIẾN ĐÚNG 1 Ô (MOVE 1 CELL)
                         </button>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <button class="btn-brake" style="padding: 12px; font-weight: 700;" onclick="sendCmd('PID_OFF')">
-                                🛑 DỪNG XE (STOP)
+
+                        <!-- HÀNG 1: QUAY TRÁI / PHẢI -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <button class="btn-atomic btn-atomic-turn-left" onclick="sendCmd('TL_STEP')">
+                                <span style="font-size: 16px;">↩️</span> Quay Trái & Tiến
                             </button>
-                            <button class="btn-step" style="padding: 12px; font-weight: 700; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #fff;" onclick="resetStepEncoders()">
+                            <button class="btn-atomic btn-atomic-turn-right" onclick="sendCmd('TR_STEP')">
+                                <span style="font-size: 16px;">↪️</span> Quay Phải & Tiến
+                            </button>
+                        </div>
+
+                        <!-- HÀNG 2: QUAY ĐẦU / ĐỌC VÁCH -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <button class="btn-atomic btn-atomic-turn-around" onclick="sendCmd('TA_STEP')">
+                                <span style="font-size: 16px;">🔄</span> Quay Đầu 180° & Tiến
+                            </button>
+                            <button class="btn-atomic btn-atomic-sense" onclick="sendCmd('SENSE')">
+                                <span style="font-size: 16px;">👁️</span> Đọc Vách Ô Hiện Tại
+                            </button>
+                        </div>
+
+                        <!-- HÀNG 3: DỪNG / RESET -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
+                            <button class="btn-atomic btn-atomic-stop" onclick="sendCmd('PID_OFF')">
+                                🛑 DỪNG KHẨN CẤP
+                            </button>
+                            <button class="btn-atomic btn-atomic-util" onclick="resetStepEncoders()">
                                 🔄 Reset Xung Về 0
                             </button>
                         </div>
-                        <button class="btn-step" style="padding: 12px; font-size: 13px; font-weight: 700; background: rgba(245,158,11,0.15); border: 1px solid var(--warning-amber); color: #fff;" onclick="calibrateCellPulses()">
+
+                        <!-- HÀNG 4: CALIB XUNG -->
+                        <button class="btn-atomic btn-atomic-calib" onclick="calibrateCellPulses()">
                             📏 Lấy Xung Thực Tế Vừa Đẩy Làm 1 Ô (Calib)
                         </button>
                     </div>
                 </div>
 
-                <!-- CỘT 2: CĂN CHỈNH SỐ XUNG MẶC ĐỊNH 1000 XUNG -->
+                <!-- CỘT 2: CĂN CHỈNH SỐ XUNG MẶC ĐỊNH 4400 XUNG -->
                 <div class="card" style="padding: 22px;">
                     <div class="card-header">
                         <div class="card-title">⚙️ Cài Đặt Số Xung Cho Đi 1 Ô</div>
-                        <span style="font-size: 12px; color: var(--primary-cyan); font-weight: 700;">Mặc định: 1000</span>
+                        <span style="font-size: 12px; color: var(--primary-cyan); font-weight: 700;">Mặc định: 4400</span>
                     </div>
 
                     <div class="param-group">
                         <div class="param-header">
                             <div class="param-title">Số Xung Cho Đi 1 Ô (180mm):</div>
-                            <div class="param-value-badge" id="valBadgePPC" style="font-size: 16px; font-weight: 900; color: var(--success-green); background: rgba(16,185,129,0.2);">1000 xung</div>
+                            <div class="param-value-badge" id="valBadgePPC" style="font-size: 16px; font-weight: 900; color: var(--success-green); background: rgba(16,185,129,0.2);">4400 xung</div>
                         </div>
                         <div class="slider-controls">
-                            <button class="btn-step" onclick="stepParam('ppc', -50)">-50</button>
-                            <button class="btn-step" onclick="stepParam('ppc', -10)">-10</button>
-                            <input type="range" class="slider-input" id="sliderPPC" min="100" max="6000" step="10" value="1000" oninput="updateBadge('PPC', this.value)" onchange="applyParam('PPC')">
-                            <button class="btn-step" onclick="stepParam('ppc', 10)">+10</button>
-                            <button class="btn-step" onclick="stepParam('ppc', 50)">+50</button>
+                            <button class="btn-step" onclick="stepParam('ppc', -100)">-100</button>
+                            <button class="btn-step" onclick="stepParam('ppc', -20)">-20</button>
+                            <input type="range" class="slider-input" id="sliderPPC" min="500" max="10000" step="20" value="4400" oninput="updateBadge('PPC', this.value)" onchange="applyParam('PPC')">
+                            <button class="btn-step" onclick="stepParam('ppc', 20)">+20</button>
+                            <button class="btn-step" onclick="stepParam('ppc', 100)">+100</button>
                             <button class="btn-apply" onclick="applyParam('PPC')">LƯU</button>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                            <span style="font-size: 11px; color: var(--text-muted);">Càng tăng số xung $\rightarrow$ Xe chạy càng xa</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Càng tăng số xung → Xe chạy càng xa</span>
                             <button class="btn-step" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="resetDefaultPPC()">
-                                ↺ Về Mặc Định 1000 Xung
+                                ↺ Về Mặc Định 4400 Xung
                             </button>
                         </div>
                     </div>
 
                     <!-- HƯỚNG DẪN ĐO ĐẠC -->
                     <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; margin-top: 14px;">
-                        <div style="font-size: 11px; font-weight: 700; color: var(--primary-cyan); margin-bottom: 4px;">💡 Cách chỉnh chuẩn 1 ô trong 10 giây:</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--primary-cyan); margin-bottom: 4px;">💡 Cách hoạt động của 4 hàm nguyên tử:</div>
                         <div style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
-                            1. Bấm <b>Reset Xung Về 0</b>.<br>
-                            2. Dùng thước đẩy xe tiến thẳng đúng 180 mm trên sa hình.<br>
-                            3. Bấm <b>Lấy Xung Thực Tế Vừa Đẩy</b> $\rightarrow$ Tự động gán số xung chuẩn!
+                            • <b>Tiến 1 ô:</b> Chạy bám tường, tự dừng khi chạm tường trước (&le;123mm) hoặc đủ 4400 xung.<br>
+                            • <b>Quay & Tiến:</b> Dùng Gyro MPU6050 xoay vuông 90°/180° rồi tự động lao vào ô mới.<br>
+                            • <b>Đọc Vách:</b> Báo ngay trạng thái Trước/Trái/Phải của ô hiện tại.
                         </div>
                     </div>
                 </div>
@@ -1507,10 +1670,10 @@
 
         function resetDefaultPPC() {
             const slider = document.getElementById('sliderPPC');
-            if (slider) slider.value = 1000;
-            updateBadge('PPC', 1000);
+            if (slider) slider.value = 4400;
+            updateBadge('PPC', 4400);
             applyParam('PPC');
-            log(">> [CÀI ĐẶT] Đã đặt lại mốc chuẩn mặc định 1000 xung cho 1 ô (180mm)", 'sys');
+            log(">> [CÀI ĐẶT] Đã đặt lại mốc chuẩn mặc định 4400 xung cho 1 ô (180mm)", 'sys');
         }
 
         function parseJSONPacket(data) {

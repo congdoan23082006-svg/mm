@@ -167,7 +167,7 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
 
     // Giảm tốc tiếp cận (Proportional Deceleration)
     // Trong 35 độ cuối cùng, tốc độ PWM giảm dần từ turnSpeed về MIN_TURN_SPEED
-    constexpr uint8_t MIN_TURN_SPEED = 60; 
+    constexpr uint8_t MIN_TURN_SPEED = 42; 
     constexpr float DECEL_ZONE = 35.0f;
 
     while (millis() - turnStart <= timeoutMs) {
@@ -204,20 +204,14 @@ bool MPU6050::rotateToAngle(float targetAngle, uint8_t m1In1, uint8_t m1In2,
         delay(2);
     }
 
-    // 1. Dừng ngay tín hiệu xung PWM trên tất cả các chân
-    analogWrite(m1In1, 0);
-    analogWrite(m1In2, 0);
-    analogWrite(m2In1, 0);
-    analogWrite(m2In2, 0);
+    // 1. Phanh ngắn mạch (Active Braking 100% PWM) trong 70ms để triệt tiêu hoàn toàn quán tính
+    analogWrite(m1In1, 255);
+    analogWrite(m1In2, 255);
+    analogWrite(m2In1, 255);
+    analogWrite(m2In2, 255);
+    delay(70);
 
-    // 2. Phanh ngắn mạch (Active Braking) trong 60ms để triệt tiêu hoàn toàn quán tính
-    digitalWrite(m1In1, HIGH);
-    digitalWrite(m1In2, HIGH);
-    digitalWrite(m2In1, HIGH);
-    digitalWrite(m2In2, HIGH);
-    delay(60);
-
-    // 3. Nhả motor về trạng thái thả tự do (Tắt dứt điểm)
+    // 2. Nhả motor về trạng thái thả tự do (Tắt dứt điểm)
     analogWrite(m1In1, 0);
     analogWrite(m1In2, 0);
     analogWrite(m2In1, 0);

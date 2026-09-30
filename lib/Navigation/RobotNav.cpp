@@ -13,9 +13,9 @@ RobotNav::RobotNav()
   autoTestMode = false;
   pidRunActive = false;
 
-  leftCompensation = 18.0f;
-  rightCompensation = 18.0f;
-  turnSpeed = 80;
+  leftCompensation = 22.0f;
+  rightCompensation = 22.0f;
+  turnSpeed = 70;
   baseForwardSpeed = 75;
   currentLeftSpeed = 0;
   currentRightSpeed = 0;
@@ -23,16 +23,16 @@ RobotNav::RobotNav()
   _lastPIDLoopTime = 0;
 
   // Giá trị thực tế đo được tại tâm ô (Theo kết quả đo mới nhất trên sa hình)
-  targetLeftDist = 170.0f;
-  targetRightDist = 149.0f;
-  centerOffset = 21.0f; // 170.0f - 149.0f = 21.0f
+  targetLeftDist = 171.0f;
+  targetRightDist = 146.0f;
+  centerOffset = 25.0f; // 171.0f - 146.0f = 25.0f
   wallThreshold = 230; // Khoảng cách < 230mm là có tường, > 230mm là cửa trống
-  frontStopDist = 100; // Phanh dừng khi cách tường trước <= 100mm
+  frontStopDist = 123; // Phanh dừng khi cách tường trước <= 123mm (tâm ô thực tế là 121mm)
 
   // Giá trị cảm biến lọc & Vùng chết tâm ô
-  smoothDL = 170.0f;
-  smoothDF = 110.0f;
-  smoothDR = 149.0f;
+  smoothDL = 171.0f;
+  smoothDF = 999.0f;
+  smoothDR = 146.0f;
   currentWallError = 0.0f;
   wallDeadband = 3.0f; // Vùng chết 3mm khử nhiễu dao động ở tâm ô mà không làm trễ phản xạ bẻ lái
   _lastSensorReadTime = 0;
@@ -48,7 +48,7 @@ RobotNav::RobotNav()
   _smoothError = 0.0f;
 
   // Chạy từng ô theo xung Encoder (Cell Stepping)
-  pulsesPerCell = 1000;
+  pulsesPerCell = 4400; // Đo thực tế từ tâm ô 1 tới giữa ô 2 = 4400 xung
   stepCellActive = false;
   stepStartPulses = 0;
   stepStartL = 0;
@@ -151,15 +151,11 @@ void RobotNav::stopMotors() {
 }
 
 void RobotNav::brakeMotors() {
-  analogWrite(M1_IN1, 0);
-  analogWrite(M1_IN2, 0);
-  analogWrite(M2_IN1, 0);
-  analogWrite(M2_IN2, 0);
-  digitalWrite(M1_IN1, HIGH);
-  digitalWrite(M1_IN2, HIGH);
-  digitalWrite(M2_IN1, HIGH);
-  digitalWrite(M2_IN2, HIGH);
-  delay(25);
+  analogWrite(M1_IN1, 255);
+  analogWrite(M1_IN2, 255);
+  analogWrite(M2_IN1, 255);
+  analogWrite(M2_IN2, 255);
+  delay(50);
   stopMotors();
 }
 
@@ -461,4 +457,114 @@ void RobotNav::update() {
   if (autoTestMode && mpuReady) {
     runTurnTest();
   }
+}
+
+// =========================================================================
+// 4 HÀM CHUYỂN ĐỘNG NGUYÊN TỬ (ATOMIC MOTION - BƯỚC 3)
+// =========================================================================
+
+WallStatus RobotNav::senseCurrentWalls() {
+  updateSensors();
+  WallStatus walls;
+  // Nhận diện tường trước: Cảm biến trước <= frontStopDist + 10, hoặc cả 2 cảm biến 45° đều đọc cự ly tường trước
+  walls.hasFront = (frontReady && smoothDF > 20 && smoothDF <= (float)(frontStopDist + 10)) ||
+                   (smoothDL <= 156.0f && smoothDR <= 154.0f && smoothDF <= 140.0f);
+  walls.hasLeft  = (leftReady && smoothDL > 20.0f && smoothDL < (float)wallThreshold);
+  walls.hasRight = (rightReady && smoothDR > 20.0f && smoothDR < (float)wallThreshold);
+  return walls;
+}
+
+WallStatus RobotNav::moveOneCell() {
+  String startMsg = ">> [ATOMIC] BAT DAU TIEN 1 O (" + String(pulsesPerCell) + " xung)...";
+  Serial.println(startMsg);
+  bleManager.println(startMsg);
+
+  stepCell(1); // Kích hoạt PID bám tường và đặt mục tiêu đúng 1 ô (pulsesPerCell xung)
+
+  bool sawLeftWall = false;
+  bool sawRightWall = false;
+  unsigned long startTime = millis();
+
+  while (stepCellActive && (millis() - startTime < 6000)) {
+    updateSensors();
+    if (mpuReady) {
+      mpu6050.update();
+    }
+
+    // Quét và ghi nhớ trạng thái vách hông khi xe còn ở giữa ô (chưa chạm tường trước, dF > 135mm)
+    if (smoothDF > 135.0f || !frontReady) {
+      if (leftReady && smoothDL < (float)wallThreshold) sawLeftWall = true;
+      if (rightReady && smoothDR < (float)wallThreshold) sawRightWall = true;
+    }
+
+    // updatePIDLoop() tự động kiểm tra:
+    // a) Chạm vách trước (dF <= frontStopDist)
+    // b) Đạt đủ pulsesPerCell (4400 xung)
+    // và sẽ tự phanh dừng, tắt stepCellActive!
+    updatePIDLoop();
+    delay(2);
+  }
+
+  // Đảm bảo xe đã phanh dừng hoàn toàn dứt điểm tại tâm ô
+  brakeMotors();
+  stopPID();
+  delay(50);
+
+  // Đọc lại cảm biến tại vị trí đỗ tâm ô mới
+  updateSensors();
+  bool finalFront = (frontReady && smoothDF > 20 && smoothDF <= (float)(frontStopDist + 10)) ||
+                    (smoothDL <= 156.0f && smoothDR <= 154.0f);
+
+  WallStatus status;
+  status.hasFront = finalFront;
+  status.hasLeft  = sawLeftWall;
+  status.hasRight = sawRightWall;
+
+  String resMsg = ">> [ATOMIC] DA DEN TAM O MOI! Vach: Truoc=" + String(status.hasFront ? "CO" : "TRONG") +
+                  " | Trai=" + String(status.hasLeft ? "CO" : "TRONG") +
+                  " | Phai=" + String(status.hasRight ? "CO" : "TRONG") +
+                  " | Xung: " + String(stepTraveledPulses);
+  Serial.println(resMsg);
+  bleManager.println(resMsg);
+
+  return status;
+}
+
+WallStatus RobotNav::turnLeftAndStep() {
+  bleManager.println(">> [ATOMIC] LENH: RE TRAI 90 DO & TIEN 1 O");
+  turnLeft(90.0f);
+  delay(60);
+  resetEnc();
+  wallPID.reset();
+  gyroPID.reset();
+  if (mpuReady) {
+    _targetYaw = mpu6050.getYaw();
+  }
+  return moveOneCell();
+}
+
+WallStatus RobotNav::turnRightAndStep() {
+  bleManager.println(">> [ATOMIC] LENH: RE PHAI 90 DO & TIEN 1 O");
+  turnRight(90.0f);
+  delay(60);
+  resetEnc();
+  wallPID.reset();
+  gyroPID.reset();
+  if (mpuReady) {
+    _targetYaw = mpu6050.getYaw();
+  }
+  return moveOneCell();
+}
+
+WallStatus RobotNav::turnAroundAndStep() {
+  bleManager.println(">> [ATOMIC] LENH: QUAY DAU 180 DO & TIEN 1 O");
+  turnRight(180.0f);
+  delay(60);
+  resetEnc();
+  wallPID.reset();
+  gyroPID.reset();
+  if (mpuReady) {
+    _targetYaw = mpu6050.getYaw();
+  }
+  return moveOneCell();
 }

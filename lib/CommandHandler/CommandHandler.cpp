@@ -149,8 +149,21 @@ void CommandHandler::processBLECommands() {
     robotNav.invertEncRight = !robotNav.invertEncRight;
     bleManager.println(">> [BLE] DAO CHIEU ENCODER PHAI: " +
                        String(robotNav.invertEncRight ? "INVERTED (-)" : "NORMAL (+)"));
-  } else if (cmd == "STEP_1" || cmd == "STEP" || cmd == "CELL_1") {
-    robotNav.stepCell(1);
+  } else if (cmd == "STEP_1" || cmd == "STEP" || cmd == "CELL_1" || cmd == "M1") {
+    robotNav.moveOneCell();
+  } else if (cmd == "TL_STEP" || cmd == "TLS") {
+    robotNav.turnLeftAndStep();
+  } else if (cmd == "TR_STEP" || cmd == "TRS") {
+    robotNav.turnRightAndStep();
+  } else if (cmd == "TA_STEP" || cmd == "TAS") {
+    robotNav.turnAroundAndStep();
+  } else if (cmd == "SENSE") {
+    WallStatus ws = robotNav.senseCurrentWalls();
+    String senseMsg = ">> [VÁCH Ô] Trước=" + String(ws.hasFront ? "CÓ" : "TRỐNG") +
+                      " | Trái=" + String(ws.hasLeft ? "CÓ" : "TRỐNG") +
+                      " | Phải=" + String(ws.hasRight ? "CÓ" : "TRỐNG");
+    bleManager.println(senseMsg);
+    Serial.println(senseMsg);
   } else if (cmd.startsWith("STEP=")) {
     int num = cmd.substring(5).toInt();
     if (num > 0 && num <= 20) {

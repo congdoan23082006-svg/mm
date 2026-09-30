@@ -10,6 +10,12 @@
 #include <VL53L0X.h>
 #include <Wire.h>
 
+struct WallStatus {
+  bool hasFront; // Có tường trước
+  bool hasLeft;  // Có tường trái
+  bool hasRight; // Có tường phải
+};
+
 class RobotNav {
 public:
   RobotNav();
@@ -27,6 +33,13 @@ public:
   void startPID();
   void stopPID();
   void stepCell(int numCells = 1);
+
+  // 4 Hàm Chuyển Động Nguyên Tử (Atomic Motion - Bước 3)
+  WallStatus moveOneCell();
+  WallStatus turnLeftAndStep();
+  WallStatus turnRightAndStep();
+  WallStatus turnAroundAndStep();
+  WallStatus senseCurrentWalls();
 
   // Encoder helper methods
   long getLeftEncoder() const;
