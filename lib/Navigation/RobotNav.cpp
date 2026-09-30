@@ -56,6 +56,13 @@ RobotNav::RobotNav()
   stepTargetPulses = 0;
   stepTraveledPulses = 0;
   stepStartTime = 0;
+
+  // Chế Độ 3: Bám Tường Tự Động (Autonomous Wall Follower)
+  autoWallFollowActive = false;
+  followRightHand = true; // Mặc định ưu tiên luật bàn tay phải
+  autoCellCount = 0;
+  autoMaxCells = 60; // Tối đa 60 ô phòng lặp vô tận khi thử nghiệm
+  lastAutoDecision = "SẴN SÀNG";
 }
 
 long RobotNav::getLeftEncoder() const {
@@ -230,6 +237,7 @@ void RobotNav::stopPID() {
   pidRunActive = false;
   autoTestMode = false;
   stepCellActive = false;
+  autoWallFollowActive = false;
   stopMotors();
 }
 
@@ -446,6 +454,11 @@ void RobotNav::updatePIDLoop() {
 void RobotNav::update() {
   updateSensors();
 
+  if (autoWallFollowActive) {
+    stepAutoWallFollow();
+    return;
+  }
+
   if (pidRunActive) {
     updatePIDLoop();
   }
@@ -567,4 +580,92 @@ WallStatus RobotNav::turnAroundAndStep() {
     _targetYaw = mpu6050.getYaw();
   }
   return moveOneCell();
+}
+
+// =========================================================================
+// CHẾ ĐỘ 3: BÁM TƯỜNG TỰ ĐỘNG (AUTONOMOUS WALL FOLLOWER)
+// =========================================================================
+
+void RobotNav::startAutoWallFollow() {
+  autoTestMode = false;
+  pidRunActive = false;
+  stepCellActive = false;
+  autoCellCount = 0;
+  lastAutoDecision = "KÍCH HOẠT";
+  autoWallFollowActive = true;
+
+  String msg = ">> [CHẾ ĐỘ 3] BẮT ĐẦU BÁM TƯỜNG TỰ ĐỘNG (" +
+               String(followRightHand ? "LUẬT TAY PHẢI" : "LUẬT TAY TRÁI") +
+               ") - GIỚI HẠN AN TOÀN " + String(autoMaxCells) + " Ô";
+  Serial.println(msg);
+  bleManager.println(msg);
+}
+
+void RobotNav::stopAutoWallFollow() {
+  autoWallFollowActive = false;
+  stopPID();
+  brakeMotors();
+  lastAutoDecision = "ĐÃ DỪNG";
+  String msg = ">> [CHẾ ĐỘ 3] ĐÃ DỪNG TỰ ĐỘNG! Tổng số ô đã chạy: " + String(autoCellCount);
+  Serial.println(msg);
+  bleManager.println(msg);
+}
+
+void RobotNav::stepAutoWallFollow() {
+  if (!autoWallFollowActive) return;
+
+  // 1. Kiểm tra an toàn giới hạn số ô để phòng chạy vòng tròn lặp vô tận
+  if (autoCellCount >= autoMaxCells) {
+    stopAutoWallFollow();
+    String limMsg = ">> [CHẾ ĐỘ 3] ĐẠT MỐC AN TOÀN " + String(autoMaxCells) + " Ô! Tự động phanh dừng.";
+    Serial.println(limMsg);
+    bleManager.println(limMsg);
+    return;
+  }
+
+  // 2. Quét trạng thái vách ô hiện tại
+  WallStatus walls = senseCurrentWalls();
+
+  // 3. Ra quyết định điều hướng tự động
+  if (followRightHand) {
+    // === QUY TẮC BÀN TAY PHẢI (RIGHT-HAND RULE) ===
+    // Ưu tiên: 1. Rẽ Phải -> 2. Đi Thẳng -> 3. Rẽ Trái -> 4. Quay Đầu 180°
+    if (!walls.hasRight) {
+      lastAutoDecision = "RẼ PHẢI & TIẾN 1 Ô";
+      turnRightAndStep();
+    } else if (!walls.hasFront) {
+      lastAutoDecision = "TIẾN THẲNG 1 Ô";
+      moveOneCell();
+    } else if (!walls.hasLeft) {
+      lastAutoDecision = "RẼ TRÁI & TIẾN 1 Ô";
+      turnLeftAndStep();
+    } else {
+      lastAutoDecision = "ĐƯỜNG CỤT: QUAY ĐẦU 180°";
+      turnAroundAndStep();
+    }
+  } else {
+    // === QUY TẮC BÀN TAY TRÁI (LEFT-HAND RULE) ===
+    // Ưu tiên: 1. Rẽ Trái -> 2. Đi Thẳng -> 3. Rẽ Phải -> 4. Quay Đầu 180°
+    if (!walls.hasLeft) {
+      lastAutoDecision = "RẼ TRÁI & TIẾN 1 Ô";
+      turnLeftAndStep();
+    } else if (!walls.hasFront) {
+      lastAutoDecision = "TIẾN THẲNG 1 Ô";
+      moveOneCell();
+    } else if (!walls.hasRight) {
+      lastAutoDecision = "RẼ PHẢI & TIẾN 1 Ô";
+      turnRightAndStep();
+    } else {
+      lastAutoDecision = "ĐƯỜNG CỤT: QUAY ĐẦU 180°";
+      turnAroundAndStep();
+    }
+  }
+
+  autoCellCount++;
+  String statusMsg = ">> [CHẾ ĐỘ 3] Ô #" + String(autoCellCount) + ": " + lastAutoDecision;
+  Serial.println(statusMsg);
+  bleManager.println(statusMsg);
+
+  // Cho xe nghỉ ổn định 80ms tại tâm ô trước khi sang ô tiếp theo
+  delay(80);
 }

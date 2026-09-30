@@ -566,6 +566,44 @@
             box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
         }
 
+        /* CHẾ ĐỘ 3: TỰ ĐỘNG BÁM TƯỜNG (AUTO WALL FOLLOWER) */
+        .btn-auto3-start {
+            background: linear-gradient(135deg, #10b981, #00f2fe);
+            border-color: #00f2fe;
+            color: #050b14;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-weight: 900;
+            box-shadow: 0 6px 25px rgba(0, 242, 254, 0.4);
+            letter-spacing: 0.5px;
+        }
+
+        .btn-auto3-start:hover {
+            box-shadow: 0 8px 30px rgba(0, 242, 254, 0.65);
+            filter: brightness(1.1);
+        }
+
+        .rule-toggle-card {
+            background: rgba(0, 0, 0, 0.35);
+            border: 2px solid var(--card-border);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .rule-toggle-card:hover {
+            border-color: rgba(0, 242, 254, 0.5);
+            background: rgba(0, 242, 254, 0.08);
+        }
+
+        .rule-toggle-card.active {
+            border-color: var(--primary-cyan);
+            background: rgba(0, 242, 254, 0.15);
+            box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);
+        }
+
         /* ACTION BUTTONS */
         .action-grid {
             display: grid;
@@ -909,7 +947,8 @@
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab(1)">🚗 Chế Độ 1: Test Xe (Bám Tường PID)</button>
             <button class="tab-btn" onclick="switchTab(2)">🏁 Chế Độ 2: Test Đi 1 Ô (Encoder)</button>
-            <button class="tab-btn" onclick="switchTab(3)">🖥️ Terminal Console BLE</button>
+            <button class="tab-btn" onclick="switchTab(3)">🤖 Chế Độ 3: Bám Tường Tự Động (Auto Follower)</button>
+            <button class="tab-btn" onclick="switchTab(4)">🖥️ Terminal Console BLE</button>
         </div>
 
         <!-- TAB 1: TEST XE TOÀN DIỆN -->
@@ -1397,8 +1436,133 @@
             </div>
         </div>
 
-        <!-- TAB 3: TERMINAL CONSOLE -->
+        <!-- TAB 3: BÁM TƯỜNG TỰ ĐỘNG (AUTONOMOUS WALL FOLLOWER) -->
         <div class="tab-panel" id="tab3">
+            <!-- HÀNG 1: TRẠNG THÁI TỔNG QUAN & HUD THỜI GIAN THỰC -->
+            <div class="card" style="padding: 24px; margin-bottom: 24px;">
+                <div class="card-header">
+                    <div class="card-title">🤖 Trạng Thái Hoạt Động Chế Độ Tự Động (Chế Độ 3)</div>
+                    <div class="status-badge" id="auto3StatusBadge" style="font-size: 13px; padding: 6px 14px;">
+                        <div class="status-dot"></div>
+                        <span id="auto3StatusText">ĐANG DỪNG</span>
+                    </div>
+                </div>
+
+                <!-- GRID 4 CHỈ SỐ QUAN TRỌNG -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-top: 10px;">
+                    <!-- CARD 1: QUYẾT ĐỊNH HIỆN TẠI -->
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Quyết Định Vừa Ra</div>
+                        <div id="auto3DecisionVal" style="font-size: 18px; font-weight: 900; color: var(--primary-cyan); margin: 10px 0; min-height: 28px;">SẴN SÀNG</div>
+                        <div style="font-size: 11px; color: var(--text-muted);" id="auto3DecisionDesc">Đang chờ lệnh kích hoạt</div>
+                    </div>
+
+                    <!-- CARD 2: SỐ Ô ĐÃ ĐI ĐƯỢC -->
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🏁 Số Ô Vượt Qua</div>
+                        <div id="auto3CellCountVal" style="font-size: 32px; font-weight: 900; color: var(--success-green); margin: 6px 0; line-height: 1;">0</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">ô (x 180mm / ô)</div>
+                    </div>
+
+                    <!-- CARD 3: LUẬT BÁM TƯỜNG ĐANG DÙNG -->
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🧭 Thuật Toán Bám Vách</div>
+                        <div id="auto3RuleVal" style="font-size: 16px; font-weight: 800; color: #d946ef; margin: 10px 0; min-height: 28px;">👉 Tay Phải (Right)</div>
+                        <div style="font-size: 11px; color: var(--text-muted);" id="auto3RulePriority">Ưu tiên: Phải &rarr; Thẳng &rarr; Trái</div>
+                    </div>
+
+                    <!-- CARD 4: GIỚI HẠN AN TOÀN -->
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🛡️ Giới Hạn Tối Đa</div>
+                        <div id="auto3MaxCellsVal" style="font-size: 32px; font-weight: 900; color: var(--warning-amber); margin: 6px 0; line-height: 1;">30</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">ô (Tự dừng khi đủ)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HÀNG 2: BẢNG ĐIỀU KHIỂN & CÀI ĐẶT THUẬT TOÁN -->
+            <div class="grid-2col" style="margin-bottom: 24px;">
+                <!-- CỘT 1: NÚT KÍCH HOẠT CHẠY TỰ ĐỘNG -->
+                <div class="card" style="padding: 22px;">
+                    <div class="card-header">
+                        <div class="card-title">🚀 Điều Khiển Chạy Tự Động</div>
+                    </div>
+
+                    <!-- NÚT START TO ĐẸP -->
+                    <button class="btn-atomic btn-auto3-start" onclick="startAutoMode()" style="margin-bottom: 14px;">
+                        <span style="font-size: 22px;">🚀</span>
+                        <span>KÍCH HOẠT TỰ ĐỘNG CHẠY MÊ CUNG</span>
+                    </button>
+
+                    <!-- NÚT STOP KHẨN CẤP -->
+                    <button class="btn-atomic btn-atomic-stop" onclick="stopAutoMode()" style="margin-bottom: 16px; padding: 14px; font-size: 15px;">
+                        <span style="font-size: 18px;">🛑</span> DỪNG TỰ ĐỘNG KHẨN CẤP (AUTO_OFF)
+                    </button>
+
+                    <!-- CHỌN QUY TẮC BÀN TAY (RADIO CARDS) -->
+                    <div style="margin-top: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--primary-cyan); margin-bottom: 10px;">
+                            🧭 Chọn Quy Tắc Bám Tường:
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div id="cardRuleRight" class="rule-toggle-card active" onclick="selectRule('R')">
+                                <div style="font-size: 20px; margin-bottom: 4px;">👉</div>
+                                <div style="font-weight: 800; font-size: 13px;">Tay Phải (Right-Hand)</div>
+                                <div style="font-size: 11px; opacity: 0.8; margin-top: 4px;">Khuyên Dùng Cho Sa Hình Mới</div>
+                            </div>
+                            <div id="cardRuleLeft" class="rule-toggle-card" onclick="selectRule('L')">
+                                <div style="font-size: 20px; margin-bottom: 4px;">👈</div>
+                                <div style="font-weight: 800; font-size: 13px;">Tay Trái (Left-Hand)</div>
+                                <div style="font-size: 11px; opacity: 0.8; margin-top: 4px;">Dành Cho Mê Cung Đảo Chiều</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CỘT 2: THIẾT LẬP AN TOÀN & NGUYÊN LÝ HOẠT ĐỘNG -->
+                <div class="card" style="padding: 22px;">
+                    <div class="card-header">
+                        <div class="card-title">⚙️ Cài Đặt An Toàn Cho Chế Độ Tự Động</div>
+                    </div>
+
+                    <!-- THANH TRƯỢT SỐ Ô TỐI ĐA -->
+                    <div class="param-group">
+                        <div class="param-header">
+                            <div class="param-title">Giới hạn số ô chạy tối đa (để thử nghiệm an toàn):</div>
+                            <div class="param-value-badge" id="valBadgeAutoMax" style="font-size: 16px; font-weight: 900; color: var(--warning-amber); background: rgba(245,158,11,0.2);">30 ô</div>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="btn-step" onclick="stepAutoMax(-10)">-10</button>
+                            <button class="btn-step" onclick="stepAutoMax(-5)">-5</button>
+                            <input type="range" class="slider-input" id="sliderAutoMax" min="5" max="100" step="5" value="30" oninput="updateAutoMaxBadge(this.value)" onchange="applyAutoMax()">
+                            <button class="btn-step" onclick="stepAutoMax(5)">+5</button>
+                            <button class="btn-step" onclick="stepAutoMax(10)">+10</button>
+                            <button class="btn-apply" onclick="applyAutoMax()">LƯU</button>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                            <span style="font-size: 11px; color: var(--text-muted);">Tự dừng khi chạy đủ số ô này (Tránh xe chạy lạc không hồi kết)</span>
+                        </div>
+                    </div>
+
+                    <!-- HƯỚNG DẪN CHI TIẾT -->
+                    <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 10px; padding: 14px; margin-top: 16px;">
+                        <div style="font-size: 12px; font-weight: 800; color: var(--primary-cyan); margin-bottom: 6px;">
+                            💡 Cơ Chế Tự Động Bám Tường Hoạt Động Thế Nào?
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+                            1. <b>Xuất phát:</b> Xe bắt đầu ở tâm ô xuất phát (0,0).<br>
+                            2. <b>Mỗi ô:</b> Xe dùng 3 cảm biến ToF quét vách (Trước, Trái, Phải).<br>
+                            3. <b>Ra quyết định:</b> Theo luật bàn tay (vd Tay Phải: nếu bên phải trống &rarr; rẽ phải; nếu kẹt &rarr; đi thẳng; nếu kẹt tiếp &rarr; rẽ trái; nếu ngõ cụt &rarr; quay đầu 180°).<br>
+                            4. <b>Thực thi nguyên tử:</b> Gọi hàm tương ứng ở Chế Độ 2 (đã căn 4400 xung và MPU6050 quay góc 90° chuẩn xác).<br>
+                            5. <b>Bám tường thông minh:</b> Trong quá trình tiến, hệ thống PID bám tường tự động giữ xe ở đúng tâm làn đường!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: TERMINAL CONSOLE -->
+        <div class="tab-panel" id="tab4">
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">🖥️ Nhật Ký BLE Terminal (Real-time)</div>
@@ -1676,6 +1840,67 @@
             log(">> [CÀI ĐẶT] Đã đặt lại mốc chuẩn mặc định 4400 xung cho 1 ô (180mm)", 'sys');
         }
 
+        // ================= HÀM ĐIỀU KHIỂN CHẾ ĐỘ 3: TỰ ĐỘNG BÁM TƯỜNG =================
+        function startAutoMode() {
+            sendCmd('AUTO_3_ON');
+            log(">> [CHẾ ĐỘ 3] Kích hoạt chạy bám tường tự động!", "cmd");
+        }
+
+        function stopAutoMode() {
+            sendCmd('AUTO_3_OFF');
+            log(">> [CHẾ ĐỘ 3] Đã gửi lệnh dừng bám tường tự động!", "cmd");
+        }
+
+        function selectRule(rule) {
+            if (rule === 'R') {
+                sendCmd('SET_RULE_R');
+                const cardR = document.getElementById('cardRuleRight');
+                const cardL = document.getElementById('cardRuleLeft');
+                if (cardR) cardR.classList.add('active');
+                if (cardL) cardL.classList.remove('active');
+                const ruleVal = document.getElementById('auto3RuleVal');
+                const prio = document.getElementById('auto3RulePriority');
+                if (ruleVal) ruleVal.textContent = "👉 Tay Phải (Right)";
+                if (prio) prio.textContent = "Ưu tiên: Phải → Thẳng → Trái";
+            } else {
+                sendCmd('SET_RULE_L');
+                const cardR = document.getElementById('cardRuleRight');
+                const cardL = document.getElementById('cardRuleLeft');
+                if (cardL) cardL.classList.add('active');
+                if (cardR) cardR.classList.remove('active');
+                const ruleVal = document.getElementById('auto3RuleVal');
+                const prio = document.getElementById('auto3RulePriority');
+                if (ruleVal) ruleVal.textContent = "👈 Tay Trái (Left)";
+                if (prio) prio.textContent = "Ưu tiên: Trái → Thẳng → Phải";
+            }
+        }
+
+        function stepAutoMax(delta) {
+            const slider = document.getElementById('sliderAutoMax');
+            if (!slider) return;
+            let val = parseInt(slider.value) + delta;
+            if (val < 5) val = 5;
+            if (val > 100) val = 100;
+            slider.value = val;
+            updateAutoMaxBadge(val);
+            applyAutoMax();
+        }
+
+        function updateAutoMaxBadge(val) {
+            const badge = document.getElementById('valBadgeAutoMax');
+            if (badge) badge.textContent = val + ' ô';
+            const maxValEl = document.getElementById('auto3MaxCellsVal');
+            if (maxValEl) maxValEl.textContent = val;
+        }
+
+        function applyAutoMax() {
+            const slider = document.getElementById('sliderAutoMax');
+            if (!slider) return;
+            const val = slider.value;
+            sendCmd(`SET_MAX_CELLS=${val}`);
+            log(`>> [CHẾ ĐỘ 3] Giới hạn số ô tối đa: ${val} ô`, 'sys');
+        }
+
         function parseJSONPacket(data) {
             if (data.type === "telemetry") {
                 if (data.yaw !== undefined) {
@@ -1888,6 +2113,72 @@
                     }
                     if (pBar) pBar.style.width = '100%';
                     if (pTxt) pTxt.textContent = `${targetPpc} / ${targetPpc} xung (100%)`;
+                }
+
+                // Cập nhật Chế độ 3 (Bám tường tự động)
+                if (data.auto3 !== undefined) {
+                    const isAuto3 = (data.auto3 === true || data.auto3 === "true");
+                    const statusBadge = document.getElementById('auto3StatusBadge');
+                    const statusText = document.getElementById('auto3StatusText');
+                    if (statusBadge && statusText) {
+                        if (isAuto3) {
+                            statusBadge.classList.add('connected');
+                            statusText.textContent = "ĐANG TỰ ĐỘNG CHẠY";
+                        } else {
+                            statusBadge.classList.remove('connected');
+                            statusText.textContent = "ĐANG DỪNG";
+                        }
+                    }
+                }
+
+                if (data.acnt !== undefined) {
+                    const cellCntEl = document.getElementById('auto3CellCountVal');
+                    if (cellCntEl) cellCntEl.textContent = data.acnt;
+                }
+
+                if (data.arule !== undefined) {
+                    const isRight = (data.arule === "R");
+                    const cardR = document.getElementById('cardRuleRight');
+                    const cardL = document.getElementById('cardRuleLeft');
+                    const ruleVal = document.getElementById('auto3RuleVal');
+                    const rulePrio = document.getElementById('auto3RulePriority');
+                    if (cardR && cardL) {
+                        cardR.classList.toggle('active', isRight);
+                        cardL.classList.toggle('active', !isRight);
+                    }
+                    if (ruleVal) ruleVal.textContent = isRight ? "👉 Tay Phải (Right)" : "👈 Tay Trái (Left)";
+                    if (rulePrio) rulePrio.textContent = isRight ? "Ưu tiên: Phải → Thẳng → Trái" : "Ưu tiên: Trái → Thẳng → Phải";
+                }
+
+                if (data.adec !== undefined) {
+                    const decEl = document.getElementById('auto3DecisionVal');
+                    const descEl = document.getElementById('auto3DecisionDesc');
+                    if (decEl) {
+                        if (data.adec === "TIEN_1_O") {
+                            decEl.textContent = "🟢 TIẾN 1 Ô";
+                            decEl.style.color = "var(--success-green)";
+                            if (descEl) descEl.textContent = "Bám tường tiến thẳng vào ô trước";
+                        } else if (data.adec === "RE_PHAI") {
+                            decEl.textContent = "🟡 RẼ PHẢI & TIẾN";
+                            decEl.style.color = "#d946ef";
+                            if (descEl) descEl.textContent = "Quay phải 90° và tiến vào ô mới";
+                        } else if (data.adec === "RE_TRAI") {
+                            decEl.textContent = "🔵 RẼ TRÁI & TIẾN";
+                            decEl.style.color = "var(--primary-cyan)";
+                            if (descEl) descEl.textContent = "Quay trái 90° và tiến vào ô mới";
+                        } else if (data.adec === "QUAY_DAU") {
+                            decEl.textContent = "🔄 QUAY ĐẦU 180°";
+                            decEl.style.color = "var(--warning-amber)";
+                            if (descEl) descEl.textContent = "Đường cụt - Quay 180° và thoát ra";
+                        } else if (data.adec === "DUNG_AN_TOAN") {
+                            decEl.textContent = "🏁 DỪNG AN TOÀN";
+                            decEl.style.color = "var(--danger-red)";
+                            if (descEl) descEl.textContent = "Đã chạm giới hạn số ô tối đa";
+                        } else {
+                            decEl.textContent = data.adec;
+                            decEl.style.color = "var(--primary-cyan)";
+                        }
+                    }
                 }
             }
             else if (data.type === "turn_res") {

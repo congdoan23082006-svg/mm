@@ -92,15 +92,22 @@ void CommandHandler::processBLECommands() {
     robotNav.gyroPID.setGains(robotNav.gyroPID.getKp(),
                               robotNav.gyroPID.getKi(), val * 1.5f);
     bleManager.println(">> [BLE] CAP NHAT PID Kd = " + String(val, 2));
-  } else if (cmd == "AUTO_ON") {
-    robotNav.pidRunActive = false;
-    robotNav.autoTestMode = true;
-    bleManager.println(">> [BLE] KICH HOAT CHEDO AUTO TEST RE TRAI/PHAI");
-  } else if (cmd == "AUTO_OFF") {
-    robotNav.autoTestMode = false;
-    robotNav.pidRunActive = false;
-    robotNav.stopMotors();
-    bleManager.println(">> [BLE] TAT CHEDO AUTO TEST");
+  } else if (cmd == "AUTO_3_ON" || cmd == "AUTO_ON" || cmd == "AUTO_START") {
+    robotNav.startAutoWallFollow();
+  } else if (cmd == "AUTO_3_OFF" || cmd == "AUTO_OFF" || cmd == "AUTO_STOP") {
+    robotNav.stopAutoWallFollow();
+  } else if (cmd == "SET_RULE_R" || cmd == "RULE_R") {
+    robotNav.followRightHand = true;
+    bleManager.println(">> [BLE] DA CHON QUY TAC BAN TAY PHAI (RIGHT-HAND RULE)");
+  } else if (cmd == "SET_RULE_L" || cmd == "RULE_L") {
+    robotNav.followRightHand = false;
+    bleManager.println(">> [BLE] DA CHON QUY TAC BAN TAY TRAI (LEFT-HAND RULE)");
+  } else if (cmd.startsWith("SET_MAX_CELLS=")) {
+    int val = cmd.substring(14).toInt();
+    if (val > 0 && val <= 300) {
+      robotNav.autoMaxCells = val;
+      bleManager.println(">> [BLE] CAP NHAT GIOI HAN SO O AN TOAN = " + String(val) + " o");
+    }
   } else if (cmd.startsWith("SET_TLD=")) {
     float val = cmd.substring(8).toFloat();
     if (val >= 50.0f && val <= 300.0f) {
@@ -216,7 +223,11 @@ void CommandHandler::sendTelemetry() {
         ",\"tld\":" + String(robotNav.targetLeftDist, 1) +
         ",\"trd\":" + String(robotNav.targetRightDist, 1) +
         ",\"wth\":" + String(robotNav.wallThreshold) +
-        ",\"fstop\":" + String(robotNav.frontStopDist) + "}";
+        ",\"fstop\":" + String(robotNav.frontStopDist) +
+        ",\"auto3\":" + String(robotNav.autoWallFollowActive ? "true" : "false") +
+        ",\"acnt\":" + String(robotNav.autoCellCount) +
+        ",\"arule\":\"" + String(robotNav.followRightHand ? "R" : "L") + "\"" +
+        ",\"adec\":\"" + robotNav.lastAutoDecision + "\"}";
     bleManager.println(jsonMsg);
   }
 }

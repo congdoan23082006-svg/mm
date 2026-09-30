@@ -41,6 +41,16 @@ public:
   WallStatus turnAroundAndStep();
   WallStatus senseCurrentWalls();
 
+  // Chế Độ 3: Bám Tường Tự Động (Autonomous Wall Follower)
+  void startAutoWallFollow();
+  void stopAutoWallFollow();
+  void stepAutoWallFollow();
+  bool autoWallFollowActive;
+  bool followRightHand; // true: Tay Phải, false: Tay Trái
+  int autoCellCount;    // Đếm số ô đã đi
+  int autoMaxCells;     // Giới hạn an toàn (mặc định 60 ô)
+  String lastAutoDecision;
+
   // Encoder helper methods
   long getLeftEncoder() const;
   long getRightEncoder() const;
